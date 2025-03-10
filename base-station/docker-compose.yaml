@@ -1,0 +1,20 @@
+include:
+  - ../lighthouse/nebula-client.yaml
+services:
+  ntrip-caster:
+    build: ./ntrip-caster
+    # image: polaris/ntrip-caster:latest
+    container_name: ntrip-caster
+    volumes:
+      - ./shared:/home/ntrip-caster
+    ports:
+      - "2101:2101"   # NTRIP
+    restart: unless-stopped
+  ntrip-server:
+    build: ./ntrip-server
+    # image: polaris/ntrip-server:latest
+    container_name: ntrip-server
+    volumes:
+      - ./shared:/home/ntrip-server
+    network_mode: "bridge"
+    restart: unless-stopped

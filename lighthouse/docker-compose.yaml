@@ -1,0 +1,22 @@
+services:
+  enrollment-server:
+    build: ./enrollment-server
+    # image: polaris/enrollment-server:latest  # FOR FINAL DELIVERABLE
+    container_name: enrollment-server
+    volumes:
+      - ./shared:/home/enrollment-server
+    ports:
+      - "80:80" # HTTP
+      - "443:443" # HTTPS
+    restart: unless-stopped
+  nebula:
+    image: nebulaoss/nebula:latest
+    container_name: nebula
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./shared:/etc/nebula
+    depends_on:
+      - enrollment-server
+    restart: unless-stopped

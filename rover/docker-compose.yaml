@@ -1,0 +1,10 @@
+include:
+  - ../lighthouse/nebula-client.yaml
+services:
+  ntrip-client:
+    build: ./ntrip-client
+    # image: polaris/ntrip-client:latest
+    container_name: ntrip-client
+    ports:
+      - "2101:2101"   # NTRIP
+    restart: unless-stopped

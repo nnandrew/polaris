@@ -1,0 +1,133 @@
+pki:
+  ca: /etc/nebula/ca.crt
+  cert: /etc/nebula/host.crt
+  key: /etc/nebula/host.key
+
+static_host_map:
+  "192.168.100.1": ["100.64.22.11:4242"]
+
+lighthouse:
+  am_lighthouse: false
+  interval: 60
+  hosts:
+    - "192.168.100.1"
+
+listen:
+  host: 0.0.0.0
+  port: 4242
+
+punchy:
+  punch: true
+
+# sshd can expose informational and administrative functions via ssh. This can expose informational and administrative
+# functions, and allows manual tweaking of various network settings when debugging or testing.
+#sshd:
+  # Toggles the feature
+  #enabled: true
+  # Host and port to listen on, port 22 is not allowed for your safety
+  #listen: 127.0.0.1:2222
+  # A file containing the ssh host private key to use
+  # A decent way to generate one: ssh-keygen -t ed25519 -f ssh_host_ed25519_key -N "" < /dev/null
+  #host_key: ./ssh_host_ed25519_key
+  # Authorized users and their public keys
+  #authorized_users:
+    #- user: steeeeve
+      # keys can be an array of strings or single string
+      #keys:
+        #- "ssh public key string"
+  # Trusted SSH CA public keys. These are the public keys of the CAs that are allowed to sign SSH keys for access.
+  #trusted_cas:
+    #- "ssh public key string"
+
+# Configure the private interface. Note: addr is baked into the nebula certificate
+tun:
+  # When tun is disabled, a lighthouse can be started without a local tun interface (and therefore without root)
+  disabled: false
+  # Name of the device. If not set, a default will be chosen by the OS.
+  # For macOS: if set, must be in the form `utun[0-9]+`.
+  # For NetBSD: Required to be set, must be in the form `tun[0-9]+`
+  dev: nebula1
+  # Toggles forwarding of local broadcast packets, the address of which depends on the ip/mask encoded in pki.cert
+  drop_local_broadcast: false
+  # Toggles forwarding of multicast packets
+  drop_multicast: false
+  # Sets the transmit queue length, if you notice lots of transmit drops on the tun it may help to raise this number. Default is 500
+  tx_queue: 500
+  # Default MTU for every packet, safe setting is (and the default) 1300 for internet based traffic
+  mtu: 1300
+
+# Configure logging level
+logging:
+  # panic, fatal, error, warning, info, or debug. Default is info and is reloadable.
+  #NOTE: Debug mode can log remotely controlled/untrusted data which can quickly fill a disk in some
+  # scenarios. Debug logging is also CPU intensive and will decrease performance overall.
+  # Only enable debug logging while actively investigating an issue.
+  level: info
+  # json or text formats currently available. Default is text
+  format: text
+  # Disable timestamp logging. useful when output is redirected to logging system that already adds timestamps. Default is false
+  #disable_timestamp: true
+  # timestamp format is specified in Go time format, see:
+  #     https://golang.org/pkg/time/#pkg-constants
+  # default when `format: json`: "2006-01-02T15:04:05Z07:00" (RFC3339)
+  # default when `format: text`:
+  #     when TTY attached: seconds since beginning of execution
+  #     otherwise: "2006-01-02T15:04:05Z07:00" (RFC3339)
+  # As an example, to log as RFC3339 with millisecond precision, set to:
+  #timestamp_format: "2006-01-02T15:04:05.000Z07:00"
+
+#stats:
+  #type: graphite
+  #prefix: nebula
+  #protocol: tcp
+  #host: 127.0.0.1:9999
+  #interval: 10s
+
+  #type: prometheus
+  #listen: 127.0.0.1:8080
+  #path: /metrics
+  #namespace: prometheusns
+  #subsystem: nebula
+  #interval: 10s
+
+  # enables counter metrics for meta packets
+  #   e.g.: `messages.tx.handshake`
+  # NOTE: `message.{tx,rx}.recv_error` is always emitted
+  #message_metrics: false
+
+  # enables detailed counter metrics for lighthouse packets
+  #   e.g.: `lighthouse.rx.HostQuery`
+  #lighthouse_metrics: false
+
+# Handshake Manager Settings
+#handshakes:
+  # Handshakes are sent to all known addresses at each interval with a linear backoff,
+  # Wait try_interval after the 1st attempt, 2 * try_interval after the 2nd, etc, until the handshake is older than timeout
+  # A 100ms interval with the default 10 retries will give a handshake 5.5 seconds to resolve before timing out
+  #try_interval: 100ms
+  #retries: 20
+
+  # query_buffer is the size of the buffer channel for querying lighthouses
+  #query_buffer: 64
+
+  # trigger_buffer is the size of the buffer channel for quickly sending handshakes
+  # after receiving the response for lighthouse queries
+  #trigger_buffer: 64
+
+# Nebula security group configuration
+firewall:
+  outbound_action: drop
+  inbound_action: drop
+  conntrack:
+    tcp_timeout: 12m
+    udp_timeout: 3m
+    default_timeout: 10m
+  outbound:
+    - port: any
+      proto: any
+      host: any
+  inbound:
+    - port: any
+      proto: any
+      host: any
+      
