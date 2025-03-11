@@ -4,7 +4,7 @@ services:
     # image: polaris/enrollment-server:latest  # FOR FINAL DELIVERABLE
     container_name: enrollment-server
     volumes:
-      - ./shared:/home/enrollment-server
+      - ./shared:/home/enrollment-server/shared
     ports:
       - "80:80" # HTTP
       - "443:443" # HTTPS
@@ -16,7 +16,7 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - ./shared:/etc/nebula
+      - ./shared:/config
     depends_on:
       - enrollment-server
     restart: unless-stopped

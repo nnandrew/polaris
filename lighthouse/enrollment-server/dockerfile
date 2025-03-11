@@ -1,15 +1,5 @@
 FROM python:3.9-slim
-
 WORKDIR /home/enrollment-server
-
 COPY . /home/enrollment-server
-
-COPY ../../.env /home/enrollment-server/.env
-
-RUN pip install --no-cache-dir -r requirements.txt & \
-    curl -Lo . https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz && \
-    tar -xzf nebula-linux-amd64.tar.gz && \
-    rm nebula-linux-amd64.tar.gz && \
-    rm nebula
-
+RUN pip install --no-cache-dir -r requirements.txt
 CMD ["python", "app.py"]
