@@ -13,7 +13,6 @@ from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarStri
 # X=2-254 are the host addresses 
 # X=255 is the broadcast address
     
-host_id = 1
 app = flask.Flask(__name__)
 yaml = YAML()
 yaml.preserve_quotes = True 
@@ -28,17 +27,21 @@ def enroll():
         return "Unauthorized", 401
         
     # Generate Host Configuration
-    global host_id
-    config_yaml = generate_nebula_config()
+    config_yaml, host_id = generate_nebula_config()
     config_path = f"./shared/config_{host_id}.yaml"
     with open(config_path, "w") as config_file:
         yaml.dump(config_yaml, config_file)  
-    host_id += 1
     
     return flask.send_file(config_path, as_attachment=True), 200
 
 def generate_nebula_config(isLighthouse=False):
     
+    # host_id Persistence
+    try:
+        with open('host_id.txt', 'r') as f:
+            host_id = int(f.read().strip())
+    except FileNotFoundError:
+        host_id = 1
     
     # Load Configuration Template
     with open("./config-template.yaml", "r") as config_file:
@@ -69,7 +72,11 @@ def generate_nebula_config(isLighthouse=False):
         config["lighthouse"]["am_lighthouse"] = True
         config["lighthouse"]["hosts"] = ""
     
-    return config 
+    # host_id Persistence
+    with open('host_id.txt', 'w') as f:
+        f.write(str(host_id + 1))
+    
+    return config, host_id
 
 if __name__ == '__main__':
     
@@ -105,8 +112,7 @@ if __name__ == '__main__':
         config = generate_nebula_config(isLighthouse=True)
         with open("./shared/config.yml", "w") as config_file:
             yaml.dump(config, config_file)
-        host_id += 1
         print("Lighthouse Configuration Generated.")   
-        
+
     # Start Flask Server
     app.run(host='0.0.0.0', port=80)
