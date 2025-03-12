@@ -4,7 +4,8 @@ import dotenv
 import requests
 import tarfile
 import flask
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarString
 
 # 192.168.100.X/24 is the subnet for the Nebula network
 # X=0 is the network identifier
@@ -14,6 +15,9 @@ import yaml
     
 host_id = 1
 app = flask.Flask(__name__)
+yaml = YAML()
+yaml.preserve_quotes = True 
+yaml.default_flow_style = True
 
 @app.route('/enroll', methods=['GET'])
 def enroll():
@@ -37,8 +41,8 @@ def generate_nebula_config(isLighthouse=False):
     
     
     # Load Configuration Template
-    with open("./config-template.yaml", "r") as template:
-        config = yaml.safe_load(template)
+    with open("./config-template.yaml", "r") as config_file:
+        config = yaml.load(config_file)
         
     # Generate Key and Certificate
     os.chdir("./shared")
@@ -47,13 +51,13 @@ def generate_nebula_config(isLighthouse=False):
     # TODO: Fix formatting of all 3
     # Add Certificates and Keys to Configuration
     with open("./ca.crt", "r") as ca_file:
-        config["pki"]["ca"] = ca_file.read().strip()
+        config["pki"]["ca"] = LiteralScalarString(ca_file.read())
         
     with open(f"./{host_id}.crt", "r") as crt_file:
-        config["pki"]["cert"] = crt_file.read().strip()
+        config["pki"]["cert"] = LiteralScalarString(crt_file.read())
         
     with open(f"./{host_id}.key", "r") as key_file:
-        config["pki"]["key"] = key_file.read().strip()
+        config["pki"]["key"] = LiteralScalarString(key_file.read())
         
     # Cleanup
     os.remove(f"./{host_id}.crt")
@@ -64,7 +68,7 @@ def generate_nebula_config(isLighthouse=False):
     if isLighthouse:
         config["lighthouse"]["am_lighthouse"] = True
         # TODO: Fix this formatting
-        config["static_host_map"]["192.168.100.1"] = [LIGHTHOUSE_PUBLIC_IP]
+        config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(LIGHTHOUSE_PUBLIC_IP)]
         config["lighthouse"]["hosts"] = ""
     
     return config 
@@ -106,6 +110,5 @@ if __name__ == '__main__':
         host_id += 1
         print("Lighthouse Configuration Generated.")   
         
-    
     # Start Flask Server
     app.run(host='0.0.0.0', port=80)

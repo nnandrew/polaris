@@ -5,7 +5,7 @@ services:
     # image: polaris/enrollment-client:latest
     container_name: enrollment-client
     volumes:
-      - ./shared:/home/enrollment-client
+      - ./shared:/home/enrollment-client/shared
     ports:
       - "80:80"   # HTTP
       - "443:443" # HTTPS

@@ -14,14 +14,14 @@ if __name__ == '__main__':
     
     # Attempt Enrollment
     url = f"http://{LIGHTHOUSE_PUBLIC_IP}/enroll?network_key={NETWORK_KEY}"
-    file_path = "/home/enrollment-server/config.yaml"
+    config_path = "/home/enrollment-client/shared/config.yaml"
 
     while True:
-        if not os.path.exists(file_path):
+        if not os.path.exists(config_path):
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
-                    with open(file_path, 'wb') as file:
+                    with open(config_path, 'wb') as file:
                         for chunk in response.iter_content(chunk_size=8192):
                             file.write(chunk)
                     print("GET request successful.")
