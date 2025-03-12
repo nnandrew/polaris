@@ -76,7 +76,7 @@ def generate_nebula_config(isLighthouse=False):
         f.write(str(host_id + 1))
     os.chdir("..")
     
-    return config, host_id
+    return (config, host_id)
 
 if __name__ == '__main__':
     
