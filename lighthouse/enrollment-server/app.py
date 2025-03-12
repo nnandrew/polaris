@@ -36,19 +36,19 @@ def enroll():
 
 def generate_nebula_config(isLighthouse=False):
     
-    # host_id Persistence
-    try:
-        with open('host_id.txt', 'r') as f:
-            host_id = int(f.read().strip())
-    except FileNotFoundError:
-        host_id = 1
-    
     # Load Configuration Template
     with open("./config-template.yaml", "r") as config_file:
         config = yaml.load(config_file)
+            
+    # host_id Persistence
+    os.chdir("./shared")
+    try:
+        with open('./host_id.txt', 'r') as f:
+            host_id = int(f.read().strip())
+    except FileNotFoundError:
+        host_id = 1
         
     # Generate Key and Certificate
-    os.chdir("./shared")
     subprocess.run(["./nebula-cert", "sign", "-name", f"{host_id}", "-ip", f"192.168.100.{host_id}/24"])
 
     # Add Certificates and Keys to Configuration
@@ -64,7 +64,6 @@ def generate_nebula_config(isLighthouse=False):
     # Cleanup
     os.remove(f"./{host_id}.crt")
     os.remove(f"./{host_id}.key")
-    os.chdir("..")
         
     # Lighthouse Configuration
     config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{LIGHTHOUSE_PUBLIC_IP}:4242")]
@@ -75,6 +74,7 @@ def generate_nebula_config(isLighthouse=False):
     # host_id Persistence
     with open('host_id.txt', 'w') as f:
         f.write(str(host_id + 1))
+    os.chdir("..")
     
     return config, host_id
 
