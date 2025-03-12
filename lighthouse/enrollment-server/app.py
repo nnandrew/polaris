@@ -13,6 +13,7 @@ from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarStri
 # X=2-254 are the host addresses 
 # X=255 is the broadcast address
     
+host_id = 1
 app = flask.Flask(__name__)
 yaml = YAML()
 yaml.preserve_quotes = True 
@@ -27,7 +28,8 @@ def enroll():
         return "Unauthorized", 401
         
     # Generate Host Configuration
-    config_yaml, host_id = generate_nebula_config()
+    global host_id
+    config_yaml = generate_nebula_config()
     config_path = f"./shared/config_{host_id}.yaml"
     with open(config_path, "w") as config_file:
         yaml.dump(config_yaml, config_file)  
@@ -76,7 +78,7 @@ def generate_nebula_config(isLighthouse=False):
         f.write(str(host_id + 1))
     os.chdir("..")
     
-    return (config, host_id)
+    return config
 
 if __name__ == '__main__':
     
