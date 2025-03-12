@@ -48,7 +48,6 @@ def generate_nebula_config(isLighthouse=False):
     os.chdir("./shared")
     subprocess.run(["./nebula-cert", "sign", "-name", f"{host_id}", "-ip", f"192.168.100.{host_id}/24"])
 
-    # TODO: Fix formatting of all 3
     # Add Certificates and Keys to Configuration
     with open("./ca.crt", "r") as ca_file:
         config["pki"]["ca"] = LiteralScalarString(ca_file.read())
@@ -65,10 +64,9 @@ def generate_nebula_config(isLighthouse=False):
     os.chdir("..")
         
     # Lighthouse Configuration
+    config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{LIGHTHOUSE_PUBLIC_IP}:4242")]
     if isLighthouse:
         config["lighthouse"]["am_lighthouse"] = True
-        # TODO: Fix this formatting
-        config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(LIGHTHOUSE_PUBLIC_IP)]
         config["lighthouse"]["hosts"] = ""
     
     return config 

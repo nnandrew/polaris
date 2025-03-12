@@ -18,7 +18,7 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - ./shared:/etc/nebula
+      - ./shared:/config
     depends_on:
       - enrollment-client
     restart: unless-stopped

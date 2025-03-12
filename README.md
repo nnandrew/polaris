@@ -86,6 +86,13 @@ Polaris uses NTRIP over a Nebula mesh network for latency purposes.
 
 ## Setup
 
+**All nodes on the Nebula network require a ```.env``` file with below format:**
+
+```yaml
+LIGHTHOUSE_PUBLIC_IP = "IPSTRING"
+NETWORK_KEY = "KEYSTRING"
+```
+
 ### Lighthouse
 
 ```bash
@@ -93,6 +100,8 @@ git clone https://github.com/nnandrew/polaris.git
 cd polaris/lighthouse
 docker-compose up
 ```
+
+Create ```polaris/lighthouse/enrollment-server/.env```
 
 ### Base Station
 
@@ -102,6 +111,8 @@ cd polaris/base-station
 docker-compose up
 ```
 
+Create ```polaris/lighthouse/enrollment-client/.env```
+
 ### Rover
 
 ```bash
@@ -109,6 +120,8 @@ git clone https://github.com/nnandrew/polaris.git
 cd polaris/rover
 docker-compose up
 ```
+
+Requires ```polaris/lighthouse/enrollment-client/.env```
 
 ## Usage
 

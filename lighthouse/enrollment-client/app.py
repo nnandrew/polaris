@@ -9,12 +9,13 @@ if __name__ == '__main__':
     
     # Load Environment Variables
     dotenv.load_dotenv()
-    NETWORK_KEY = os.getenv("NETWORK_KEY").split(",")
+    NETWORK_KEY = os.getenv("NETWORK_KEY")
     LIGHTHOUSE_PUBLIC_IP = os.getenv("LIGHTHOUSE_PUBLIC_IP")
+    print("Environment Variables Loaded.")
     
     # Attempt Enrollment
     url = f"http://{LIGHTHOUSE_PUBLIC_IP}/enroll?network_key={NETWORK_KEY}"
-    config_path = "/home/enrollment-client/shared/config.yaml"
+    config_path = "./shared/config.yml"
 
     while True:
         if not os.path.exists(config_path):
@@ -30,4 +31,5 @@ if __name__ == '__main__':
 
             except requests.RequestException as e:
                 print(f"Error making GET request: {e}. Retrying in {BACKOFF_TIME} seconds.")
+        print(f"Config exists. Checking again in {BACKOFF_TIME} seconds.")
         time.sleep(BACKOFF_TIME)
