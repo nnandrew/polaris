@@ -6,7 +6,7 @@ services:
     # image: polaris/ntrip-caster:latest
     container_name: ntrip-caster
     volumes:
-      - ./shared:/home/ntrip-caster
+      - ../base-station/shared:/home/ntrip-caster
     ports:
       - "2101:2101"   # NTRIP
     restart: unless-stopped
@@ -15,6 +15,29 @@ services:
     # image: polaris/ntrip-server:latest
     container_name: ntrip-server
     volumes:
-      - ./shared:/home/ntrip-server
+      - ../base-station/shared:/home/ntrip-server
     network_mode: "bridge"
+    restart: unless-stopped
+  enrollment-client:
+    build: ../lighthouse/enrollment-client
+    # image: polaris/enrollment-client:latest
+    container_name: enrollment-client
+    environment: 
+      - GROUP_NAME=base_station
+    volumes:
+      - ../base-station/shared:/home/enrollment-client/shared
+    ports:
+      - "80:80"   # HTTP
+      - "443:443" # HTTPS
+    restart: unless-stopped
+  nebula:
+    image: nebulaoss/nebula:latest
+    container_name: nebula
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ../base-station/shared:/config
+    depends_on:
+      - enrollment-client
     restart: unless-stopped
