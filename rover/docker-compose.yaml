@@ -1,5 +1,3 @@
-include:
-  - ../lighthouse/nebula-client.yaml
 services:
   ntrip-client:
     build: ./ntrip-client
