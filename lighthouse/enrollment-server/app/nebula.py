@@ -9,20 +9,22 @@ yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True 
 yaml.default_flow_style = True
 
-def generate_nebula_config(group_name):
+def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
     
     # Load Configuration Template
-    with open("./config-template.yaml", "r") as config_file:
+    with open("../config-template.yaml", "r") as config_file:
         config = yaml.load(config_file)
             
     # Host Mapping Persistence
-    conn = sqlite3.connect('./shared/record.db')
+    conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
     if group_name == "lighthouse":
         host_id = 1
     else:
         cursor.execute("SELECT MAX(id) FROM hosts")
-        host_id = int(cursor.fetchone()) + 1
+        host_id = int(cursor.fetchone()[0]) + 1
+        if host_id > 254:
+            raise Exception("Network full.")
     
     vpn_ip = f"192.168.100.{host_id}"
     cursor.execute('''
@@ -52,16 +54,18 @@ def generate_nebula_config(group_name):
     os.remove(f"./{host_id}.key")
         
     # Lighthouse Configuration and File Writing
-    config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{flask.current_app.config.get("LIGHTHOUSE_PUBLIC_IP")}:4242")]
+    config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{LIGHTHOUSE_PUBLIC_IP}:4242")]
     if group_name == "lighthouse":
         config["lighthouse"]["am_lighthouse"] = True
         config["lighthouse"]["hosts"] = ""
-        config_path = "./config.yml"
+        config_path = "/home/enrollment-server/shared/config.yml"
         with open(config_path, "w") as config_file:
             yaml.dump(config, config_file)
     else: 
-        config_path = f"./config_{host_id}.yaml"
+        config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
         with open(config_path, "w") as config_file:
             yaml.dump(config, config_file)  
     
+    print(f"Certificate generated for {group_name} with {vpn_ip}.")
+
     return config_path

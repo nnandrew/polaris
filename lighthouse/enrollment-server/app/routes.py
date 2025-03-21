@@ -1,5 +1,6 @@
 import flask
-import nebula
+import os
+from app import nebula
 import sqlite3
 
 # 192.168.100.X/24 is the subnet for the Nebula network
@@ -20,9 +21,11 @@ def enroll():
         
     # Generate Host Configuration
     group_name = flask.request.args.get('group_name')
-    config_path = nebula.generate_nebula_config(group_name)
+    config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'))
+    response = flask.send_file(config_path, as_attachment=True)
+    response.call_on_close(os.remove(config_path))
     
-    return flask.send_file(config_path, as_attachment=True), 200
+    return response
 
 @main_bp.route('/api/base-station-ip', methods=['GET'])
 def baseStationIP():
@@ -33,7 +36,7 @@ def baseStationIP():
         return "Unauthorized", 401
     
     # Return Stored Base Station IP
-    conn = sqlite3.connect('./shared/record.db')
+    conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM hosts WHERE group_name = base_station")
-    return cursor.fetchone()
+    return cursor.fetchone()[0]
