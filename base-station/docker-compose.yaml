@@ -1,27 +1,29 @@
 services:
-  ntrip-caster:
-    build: ./ntrip-caster
-    # image: polaris/ntrip-caster:latest
-    container_name: ntrip-caster
-    volumes:
-      - ../base-station/shared:/home/ntrip-caster
-    ports:
-      - "2101:2101"   # NTRIP
-    restart: unless-stopped
-  ntrip-server:
-    build: ./ntrip-server
-    # image: polaris/ntrip-server:latest
-    container_name: ntrip-server
-    volumes:
-      - ../base-station/shared:/home/ntrip-server
-    network_mode: "bridge"
-    restart: unless-stopped
+  # ntrip-caster:
+  #   build: ./ntrip-caster
+  #   # image: polaris/ntrip-caster:latest
+  #   container_name: ntrip-caster
+  #   volumes:
+  #     - ../base-station/shared:/home/ntrip-caster
+  #   ports:
+  #     - "2101:2101"   # NTRIP
+  #   restart: unless-stopped
+  # ntrip-server:
+  #   build: ./ntrip-server
+  #   # image: polaris/ntrip-server:latest
+  #   container_name: ntrip-server
+  #   volumes:
+  #     - ../base-station/shared:/home/ntrip-server
+  #   network_mode: "bridge"
+  #   restart: unless-stopped
   enrollment-client:
     build: ../lighthouse/enrollment-client
     # image: polaris/enrollment-client:latest
     container_name: enrollment-client
     environment: 
       - GROUP_NAME=base_station
+    env_file:
+      - ../.env
     volumes:
       - ../base-station/shared:/home/enrollment-client/shared
     ports:

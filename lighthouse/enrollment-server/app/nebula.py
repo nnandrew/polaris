@@ -1,9 +1,9 @@
 import os
 import subprocess
-import flask
 import sqlite3
 import ruamel.yaml
 from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarString
+from flask import current_app
 
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True 
@@ -66,6 +66,6 @@ def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
         with open(config_path, "w") as config_file:
             yaml.dump(config, config_file)  
     
-    print(f"Certificate generated for {group_name} with {vpn_ip}.")
+    current_app.logger.info(f"Certificate on {vpn_ip} generated for {group_name}.")
 
     return config_path

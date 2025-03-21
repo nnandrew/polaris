@@ -27,16 +27,25 @@ def enroll():
     
     return response
 
-@main_bp.route('/api/base-station-ip', methods=['GET'])
-def baseStationIP():
+@main_bp.route('/api/ntrip', methods=['GET'])
+def ntrip():
     
-    # Authenticate Request
-    network_key = flask.request.args.get('network_key')
-    if not network_key or network_key != flask.current_app.config.get("NETWORK_KEY"):
-        return "Unauthorized", 401
-    
-    # Return Stored Base Station IP
+    # Return Base Station IP
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hosts WHERE group_name = base_station")
-    return cursor.fetchone()[0]
+    cursor.execute("SELECT vpn_ip FROM hosts WHERE group_name = 'base_station'")
+    ip = cursor.fetchone()[0]
+    conn.close()
+    return ip
+
+@main_bp.route('/api/hosts', methods=['GET'])
+def hosts():
+    
+    # Return Hosts
+    conn = sqlite3.connect('./record.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, vpn_ip, group_name FROM hosts;")
+    hosts = cursor.fetchall()
+    conn.close()
+    return flask.render_template('hosts.html', hosts=hosts)
+

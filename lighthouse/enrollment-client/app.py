@@ -30,6 +30,9 @@ if __name__ == '__main__':
         "group_name": GROUP_NAME
     }
     config_path = "./shared/config.yml"
+    
+    if os.path.exists(config_path):
+        logger.info(f"Config exists. Checking again in {BACKOFF_TIME} seconds.")
 
     while True:
         if not os.path.exists(config_path):
@@ -44,6 +47,4 @@ if __name__ == '__main__':
                     logger.warning(f"Request failed with status code {response.status_code}. Retrying in {BACKOFF_TIME} seconds.")
             except requests.RequestException as e:
                 logger.warning(f"Error making GET request: {e}. Retrying in {BACKOFF_TIME} seconds.")
-        else:
-            logger.info(f"Config exists. Checking again in {BACKOFF_TIME} seconds.")
         time.sleep(BACKOFF_TIME)
