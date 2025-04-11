@@ -1,0 +1,54 @@
+# Config changes format version 1.0
+# created by Yahir Lopez
+[del]
+[set]
+# Team Specific-Sugessted Configs
+  RAM CFG-INFMSG-UBX_UART1 0x17             # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the UBX Protocol on UART1
+Flash CFG-INFMSG-UBX_UART1 0x17
+  RAM CFG-INFMSG-NMEA_UART1 0x17            # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the NEMA Protocol on UART1
+Flash CFG-INFMSG-NMEA_UART1 0x17
+  RAM CFG-INFMSG-UBX_USB 0x17               # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the UBX Protocol on USB
+Flash CFG-INFMSG-UBX_USB 0x17
+  RAM CFG-INFMSG-NMEA_USB 0x17              # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the NEMA Protocol on USB
+Flash CFG-INFMSG-NMEA_USB 0x17
+  RAM CFG-NAVSPG-DYNMODEL 3                 # Pedestrain platform model (IDK what this does tbh, but sounds useful); theres also Portable(0/default)
+Flash CFG-NAVSPG-DYNMODEL 3
+  RAM CFG-NMEA-HIGHPREC 1                   # Increase precision of position output. Long and Lat have 7 digits after decimal and altitude has 3.
+Flash CFG-NMEA-HIGHPREC 1
+  RAM CFG-NMEA-PROTVER 41                   # NMEA Protocol Version 4.10 (default)
+Flash CFG-NMEA-PROTVER 41
+  RAM CFG-RATE-TIMEREF 1                    # Time system to which measurements are aligned (GPS by default)
+Flash CFG-RATE-TIMEREF 1
+  RAM CFG-UART1-BAUDRATE 0x70800            # UART Baudrate (suggested from following config)
+Flash CFG-UART1-BAUDRATE 0x70800
+
+# Configuration from Official Config File
+  RAM CFG-UART1INPROT-NMEA 0            # Disable NMEA Input on UART1 (it won't expect/decode those messages)
+Flash CFG-UART1INPROT-NMEA 0
+  RAM CFG-UART1INPROT-UBX 1             # Enable UBX input on UART1
+Flash CFG-UART1INPROT-UBX 1
+  RAM CFG-UART1INPROT-RTCM3X 1          # Enable RTCM3X input on UART1
+Flash CFG-UART1INPROT-RTCM3X 1
+  RAM CFG-UART1OUTPROT-UBX 1            # Enable UBX output on UART1
+Flash CFG-UART1OUTPROT-UBX 1
+  RAM CFG-UART1OUTPROT-NMEA 1           # Enable NMEA output on UART1
+Flash CFG-UART1OUTPROT-NMEA 1
+  RAM CFG-UART1OUTPROT-RTCM3X 0         # Disable RTCM3 output on UART1
+Flash CFG-UART1OUTPROT-RTCM3X 0
+
+  RAM CFG-USBINPROT-NMEA 1              # Enable NMEA Input on UART1 (it won't expect/decode those messages)
+Flash CFG-USBINPROT-NMEA 1
+  RAM CFG-USBINPROT-UBX 1               # Enable UBX input on UART1
+Flash CFG-USBINPROT-UBX 1
+  RAM CFG-USBINPROT-RTCM3X 1            # Enable RTCM3X input on UART1
+Flash CFG-USBINPROT-RTCM3X 1
+  RAM CFG-USBOUTPROT-UBX 1              # Enable UBX output on UART1
+Flash CFG-USBOUTPROT-UBX 1
+  RAM CFG-USBOUTPROT-NMEA 1             # Enable NMEA output on UART1
+Flash CFG-USBOUTPROT-NMEA 1
+  RAM CFG-USBOUTPROT-RTCM3X 0           # Disable RTCM3 output on UART1
+Flash CFG-USBOUTPROT-RTCM3X 0
+
+  RAM CFG-MSGOUT-UBX_NAV_PVT_USB 0x1                # Enables UBX_NAV_PVT messages on USB
+Flash CFG-MSGOUT-UBX_NAV_PVT_USB 0x1
+
