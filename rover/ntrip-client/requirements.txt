@@ -1,0 +1,7 @@
+pygnssutils
+pyrtcm
+pyubx2
+pyserial
+numpy
+influxdb3-python
+dotenv

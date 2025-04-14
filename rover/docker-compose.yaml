@@ -1,11 +1,13 @@
 services:
-  # ntrip-client:
-  #   build: ./ntrip-client
-  #   # image: polaris/ntrip-client:latest
-  #   container_name: ntrip-client
-  #   ports:
-  #     - "2101:2101"   # NTRIP
-  #   restart: unless-stopped
+  ntrip-client:
+    build: ./ntrip-client
+    # image: polaris/ntrip-client:latest
+    container_name: ntrip-client
+    env_file:
+      - ../.env
+    ports:
+      - "2101:2101"   # NTRIP
+    restart: unless-stopped
   enrollment-client:
     build: ../lighthouse/enrollment-client
     # image: polaris/enrollment-client:latest

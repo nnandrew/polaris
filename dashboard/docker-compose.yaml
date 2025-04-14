@@ -1,35 +1,14 @@
 services:
-#   grafana:
-#     image: grafana/grafana:latest
-#     container_name: grafana
-#     environment:
-#       GF_SECURITY_ADMIN_PASSWORD: "admin"
-#     volumes:
-#       - ./grafana-storage:/var/lib/grafana
-#     ports:
-#       - "3000:3000"
-  enrollment-client:
-    build: ../lighthouse/enrollment-client
-    # image: polaris/enrollment-client:latest
-    container_name: enrollment-client
-    environment: 
-      - GROUP_NAME=dashboard
-    env_file:
-      - ../.env
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
     volumes:
-      - ../dashboard/shared:/home/enrollment-client/shared
+      - ./grafana-config/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana-config/dashboards:/var/lib/grafana/dashboards
+      - ./grafana-config/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-config/dashboard_provisioning.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
     ports:
-      - "80:80"   # HTTP
-      - "443:443" # HTTPS
-    restart: unless-stopped
-  nebula:
-    image: nebulaoss/nebula:latest
-    container_name: nebula
-    network_mode: "host"
-    cap_add:
-      - NET_ADMIN
-    volumes:
-      - ../dashboard/shared:/config
-    depends_on:
-      - enrollment-client
+      - "3000:3000"
     restart: unless-stopped

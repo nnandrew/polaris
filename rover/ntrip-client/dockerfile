@@ -1,7 +1,5 @@
-FROM openjdk:17-jdk-slim
-
+FROM python:3.9-slim
 WORKDIR /home/ntrip-client
-
 COPY . /home/ntrip-client
-
-CMD ["java", "-jar", "ntrip-client.jar"]
+RUN pip install --no-cache-dir -r requirements.txt
+CMD ["python", "app.py"]
