@@ -5,8 +5,8 @@ import dotenv
 import gps_reader
 
 # Configure GPS
-gps = gps_reader.Budget()
-# gps = gps_reader.Premium()
+# gps = gps_reader.Budget()
+gps = gps_reader.Premium()
 # gps = gps_reader.Sparkfun()
 ubr = gps.getReader()
 
@@ -32,11 +32,11 @@ try:
                     .field("longitude", parsed_data.lon) \
                     .field("altitude_m", parsed_data.hMSL/1000) \
                     .field("ground_speed_ms", parsed_data.gSpeed / 1000) \
-                    .field("ground_heading_deg", parsed_data.headMot/100000) \
+                    .field("ground_heading_deg", parsed_data.headMot) \
                     .field("horizontal_accuracy_m", parsed_data.hAcc/1000) \
                     .field("vertical_accuracy_m", parsed_data.vAcc/1000) \
                     .field("speed_accuracy_ms", parsed_data.sAcc/1000) \
-                    .field("heading_accuracy_deg", parsed_data.headAcc/100000)
+                    .field("heading_accuracy_deg", parsed_data.headAcc)
                 client.write(database=database, record=points, write_precision="s")
                 print(f"Latitude: {parsed_data.lat}")
                 print(f"Longitude: {parsed_data.lon}")
