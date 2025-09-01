@@ -2,3 +2,5 @@
 shared/
 __pycache__
 .idea/
+.venv/
+.venv
