@@ -126,3 +126,8 @@ Requires ```polaris/lighthouse/enrollment-client/.env```
 ## Usage
 
 TBD
+
+## Useful Links
+
+- Setting up SSH for the RB5: [LINK](https://developer.ridgerun.com/wiki/index.php/Qualcomm_Robotics_RB5/Development_in_the_Board/Getting_into_the_Board/Using_SSH)
+- Link to access the InfluxDB website/data: [LINK](https://us-east-1-1.aws.cloud2.influxdata.com")

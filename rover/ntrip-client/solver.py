@@ -20,7 +20,7 @@ MSM4 Components: https://www.tersus-gnss.com/tech_blog/new-additions-in-rtcm3-an
     Full GPS Pseudoranges, Phaseranges, Carrier-to-Noise Ratio
 """
 
-def ntripthread(outqueue: Queue, stopevent: Event):
+def ntrip_thread(out_queue: Queue, stop_event: Event):
 
     gnc = GNSSNTRIPClient()
     gnc.run(
@@ -32,7 +32,7 @@ def ntripthread(outqueue: Queue, stopevent: Event):
         datatype="RTCM",
         ntripuser="andrewvnguyen@utexas.edu",
         ntrippassword="none",
-        output=outqueue,
+        output=out_queue,
         # DGPS Configuration (unused)
         ggainterval=-1,
         ggamode=1,  # fixed rover reference coordinates
@@ -41,14 +41,14 @@ def ntripthread(outqueue: Queue, stopevent: Event):
         refalt=0.0,
         refsep=0.0,
     )
-    while not stopevent.is_set():
+    while not stop_event.is_set():
         sleep(3)
         
-def datathread(outqueue: Queue, stopevent: Event):
+def data_thread(out_queue: Queue, stop_event: Event):
 
-    while not stopevent.is_set():
-        while not outqueue.empty():
-            raw, parsed = outqueue.get()
+    while not stop_event.is_set():
+        while not out_queue.empty():
+            raw, parsed = out_queue.get()
             # if parsed.ismsm:
             if parsed.identity == "1074":
                 rtcm_metadata, rtcm_sats = msm_parser.parse(parsed)
@@ -60,24 +60,24 @@ def datathread(outqueue: Queue, stopevent: Event):
                 calculated_ecef = ecef_solver.solve(rover_ecef, rover_sats, rtcm_metadata, rtcm_sats)
                 pprint(rover_ecef)
                 pprint(calculated_ecef)
-            outqueue.task_done()
+            out_queue.task_done()
         sleep(1)
         
 def main():
     
     # initialize structures
-    outqueue = Queue()
-    stopevent = Event()
+    out_queue = Queue()
+    stop_event = Event()
 
     # define the threads which will run in the background until terminated by user
     dt = Thread(
-        target=datathread, 
-        args=(outqueue, stopevent), 
+        target=data_thread,
+        args=(out_queue, stop_event),
         daemon=True
     )
     nt = Thread(
-        target=ntripthread, 
-        args=(outqueue, stopevent), 
+        target=ntrip_thread,
+        args=(out_queue, stop_event),
         daemon=True
     )
     
@@ -93,7 +93,7 @@ def main():
             sleep(3)
     except KeyboardInterrupt:
         # stop the threads
-        stopevent.set()
+        stop_event.set()
         print("NTRIP client terminated by user, waiting for data processing to complete...")
 
     # wait for final queued tasks to complete

@@ -1,5 +1,10 @@
 FROM python:3.9-slim
 WORKDIR /home/ntrip-client
-COPY . /home/ntrip-client
+
+# Copying and Installing the requirements first to optimize building the docker image:
+# https://luis-sena.medium.com/creating-the-perfect-python-dockerfile-51bdec41f1c8
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-CMD ["python", "app.py"]
+
+COPY . /home/ntrip-client
+CMD ["python", "solver.py"]

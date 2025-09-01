@@ -1,3 +1,4 @@
 .env
 shared/
 __pycache__
+.idea/

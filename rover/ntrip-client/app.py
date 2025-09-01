@@ -6,23 +6,29 @@ import gps_reader
 
 # Configure GPS
 # gps = gps_reader.Budget()
-gps = gps_reader.Premium()
-# gps = gps_reader.Sparkfun()
-ubr = gps.getReader()
+# gps = gps_reader.Premium()
+gps = gps_reader.SparkFun()
+ubr = gps.get_reader()
 
 # Configure InfluxDB
 dotenv.load_dotenv()
-token = os.getenv("INFLUXDB_TOKEN")
+token = os.getenv("INFLUXDB_TOKEN") if os.getenv("INFLUXDB_TOKEN") else 'XgXNV68VYCQHUUQrklj2FUkZ3cdKhd1xG9PxjDb3nZh36tqNkp3p10DKKdiHGYWb1ENqy27yz_q-WrR9_asA_w=='
 org = "GPSSensorData"
 host = "https://us-east-1-1.aws.cloud2.influxdata.com"
 client = InfluxDBClient3(host=host, token=token, org=org)
 
+# Verify we can write to the client first
+client.write(database="GPS", record=Point('testing').field('message', 'Hello from RB5'), write_precision='s')
+
 try:
     while True:
         raw_data, parsed_data = ubr.read()
-            
-        if parsed_data is not None and parsed_data.identity == "NAV-PVT":
-            
+
+        if parsed_data is None:
+            print("No data received")
+            continue
+        elif parsed_data.identity == 'NAV-PVT':
+            print('Received NAV-PVT')
             # Log parsed data to InfluxDB
             if parsed_data.fixType != 0:
                 database="GPS"
@@ -41,11 +47,12 @@ try:
                 print(f"Latitude: {parsed_data.lat}")
                 print(f"Longitude: {parsed_data.lon}")
             else:
-                print("No fix available.")
-            
+                print(f'Parsed data does not have fix type set: {parsed_data.fixType}')
+        else:
+            print(f'Ignoring data with identity: {parsed_data.identity}')
             
 except KeyboardInterrupt:
     print("Terminating...")
 finally:
-    gps.closeSerial()
+    gps.close_serial()
     client.close()
