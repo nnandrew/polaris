@@ -7,4 +7,4 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /home/ntrip-client
-CMD ["python", "solver.py"]
+CMD ["python", "app.py"]
