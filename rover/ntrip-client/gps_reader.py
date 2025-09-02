@@ -9,7 +9,6 @@ class Generic:
     def get_reader(self, baud, msgs, vid=None, pid=None) -> UBXReader:
 
         # Configure serial connection
-        print("TESTING")
         # ports = comports()
         # Temporary potentially doable hard coded port
         ser = Serial("/dev/ttyACM0", baud, timeout=1) # Default to this port for now

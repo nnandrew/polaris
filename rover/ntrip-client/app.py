@@ -1,16 +1,21 @@
-from queue import Queue
-from threading import Event, Thread
-from time import sleep
-from pygnssutils import GNSSNTRIPClient
-import gps_reader
-from influxdb_client_3 import InfluxDBClient3, Point
 import os
 import dotenv
+import gps_reader
+from queue import Queue
+from time import sleep
+from pygnssutils import GNSSNTRIPClient
+from threading import (
+    Event, 
+    Thread
+)
+from influxdb_client_3 import (
+    InfluxDBClient3, 
+    Point
+)
 from pyubx2 import (
     protocol,
     RTCM3_PROTOCOL
 )
-import os
 
 """
 Mount Point AUS_LOFT_GNSS 
@@ -28,14 +33,19 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     print(f"{'rtcm_get_thread':<20}: Starting...")
     gnc = GNSSNTRIPClient()
     gnc.run(
-        # Required Configuration
-        server="rtk2go.com",
+        # Public RTK
+        # server="rtk2go.com",
+        # mountpoint="AUS_LOFT_GNSS",
+        # ntripuser="andrewvnguyen@utexas.edu",
+        # Private RTK
+        server="100.70.35.29",
+        mountpoint="pygnssutils",
+        ntripuser="test",
+        # Static Stuff
+        ntrippassword="none",
         port=2101,
         https=0,
-        mountpoint="AUS_LOFT_GNSS",
         datatype="RTCM",
-        ntripuser="andrewvnguyen@utexas.edu",
-        ntrippassword="none",
         output=gnss_rtcm_queue,
         # DGPS Configuration (unused)
         ggainterval=-1,
@@ -46,8 +56,8 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
         refsep=0.0,
     )
     while not stop_event.is_set():
-        sleep(5)
-        print(f"{'rtcm_get_thread':<20}: Alive...")
+        sleep(10)
+        # print(f"{'rtcm_get_thread':<20}: Alive...")
         
 def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
     """
@@ -56,7 +66,7 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
     while not stop_event.is_set():
-        while not gnss_rtcm_queue.empty():
+        if not gnss_rtcm_queue.empty():
             try:
                 raw_data, parsed_data = gnss_rtcm_queue.get()
                 if protocol(raw_data) == RTCM3_PROTOCOL:
@@ -74,8 +84,8 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
             except Exception as err:
                 print(f"{'rtcm_process_thread':<20}: {err}")
             gnss_rtcm_queue.task_done()
-        sleep(5)
-        print(f"{'rtcm_process_thread':<20}: Alive...")
+            sleep(1)
+        # print(f"{'rtcm_process_thread':<20}: Alive...")
         
                 
 def influx_write_thread(gps, stop_event):
@@ -110,14 +120,27 @@ def influx_write_thread(gps, stop_event):
                         .field("speed_accuracy_ms", parsed_data.sAcc/1000) \
                         .field("heading_accuracy_deg", parsed_data.headAcc)
                     client.write(database=database, record=points, write_precision="s")
+                    fix_map = {
+                        0: "No fix",
+                        1: "Dead reckoning only", 
+                        2: "2D fix",
+                        3: "3D fix",
+                        4: "GNSS + dead reckoning combined",
+                        5: "Time only fix"
+                    }
+                    diff_map = {
+                        0: "No differential corrections",
+                        1: "Differential corrections applied"
+                    }
+                    print(f"{'influx_write_thread':<20}: {fix_map.get(int(parsed_data.fixType))}")
+                    print(f"{'influx_write_thread':<20}: {diff_map.get(parsed_data.diffSoln)}")
                     print(f"{'influx_write_thread':<20}: Latitude: {parsed_data.lat}")
                     print(f"{'influx_write_thread':<20}: Longitude: {parsed_data.lon}")
                 # else:
                     # print(f'Parsed data does not have fix type set: {parsed_data.fixType}')
             # else:
             #     print(f'Ignoring data with identity: {parsed_data.identity}')
-            sleep(5)
-            print(f"{'influx_write_thread':<20}: Alive...")
+            # print(f"{'influx_write_thread':<20}: Alive...")
                 
     except KeyboardInterrupt:
         print("Terminating...")
@@ -142,17 +165,17 @@ def app():
     nt = Thread(
         target=rtcm_get_thread,
         args=(gnss_rtcm_queue, stop_event),
-        daemon=False
+        daemon=True
     )
     pt = Thread(
         target=rtcm_process_thread,
         args=(gnss_rtcm_queue, gps, stop_event),
-        daemon=False
+        daemon=True
     )
     it = Thread(
         target=influx_write_thread,
         args=(gps, stop_event),
-        daemon=False
+        daemon=True
     )
     
     # # start the threads
@@ -160,28 +183,29 @@ def app():
     pt.start()
     it.start()
 
-    print("NTRIP client and processor threads started - press CTRL-C to terminate...")
+    print(f"{'main_thread':<20}: NTRIP client and processor threads started - press CTRL-C to terminate...")
     
     # Idle Parent Thread
     try:
         while True:
-            sleep(5)
-            print(f"{'main_thread':<20}: Alive...")
+            # Interrupt interval
+            sleep(10)
+            # print(f"{'main_thread':<20}: Alive...")
             
     except KeyboardInterrupt:
         # stop the threads
         stop_event.set()
-        print("NTRIP client terminated by user, waiting for data processing to complete...")
+        print(f"{'main_thread':<20}: NTRIP client terminated by user, waiting for data processing to complete...")
 
     # wait for final queued tasks to complete
     nt.join()
     pt.join()
     it.join()
 
-    print(f"Data processing complete.")
+    print(f"{'main_thread':<20}: Data processing complete.")
 
 if __name__ == "__main__":
-    print("Starting NTRIP Client...")
+    print(f"{'main_thread':<20}: Starting NTRIP Client...")
     app()
     
-print("NTRIP Client terminated.")
+print(f"{'main_thread':<20}: NTRIP Client terminated.")
