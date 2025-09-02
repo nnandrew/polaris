@@ -10,5 +10,5 @@ datasources:
       httpMode: POST
       insecureGrpc: false
     secureJsonData:
-      token: ${INFLUXDB_TOKEN}
+      token: XgXNV68VYCQHUUQrklj2FUkZ3cdKhd1xG9PxjDb3nZh36tqNkp3p10DKKdiHGYWb1ENqy27yz_q-WrR9_asA_w==
     isDefault: true
