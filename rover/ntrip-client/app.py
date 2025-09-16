@@ -47,9 +47,9 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
         # mountpoint="AUS_LOFT_GNSS",
         # ntripuser="andrewvnguyen@utexas.edu",
         # Private RTK
-        server="10.159.68.18",
-        mountpoint="pygnssutils",
-        ntripuser="test",
+        # server="192.168.100.11",
+        # mountpoint="pygnssutils",
+        # ntripuser="test",
         # Static Stuff
         ntrippassword="none",
         port=2101,
@@ -97,11 +97,10 @@ def influx_write_thread(GPS_TYPE, gps, stop_event):
     org = "GPSSensorData"
     host = "https://us-east-1-1.aws.cloud2.influxdata.com"
     client = InfluxDBClient3(host=host, token=token, org=org)
-    client.write(database="GPS", record=Point('testing').field('message', 'Hello from RB5'), write_precision='s')
     ubr = gps.get_reader()
 
-    try:
-        while not stop_event.is_set():
+    while not stop_event.is_set():
+        try:
             raw, parsed = ubr.read()
 
             if parsed is None:
@@ -148,11 +147,15 @@ def influx_write_thread(GPS_TYPE, gps, stop_event):
                 print(f'{'influx_write_thread':<20}: ValidDate: {parsed.validDate}')
                 print(f"{'influx_write_thread':<20}: {dt.isoformat()}")
                 
-    except KeyboardInterrupt:
-        print("Terminating...")
-    finally:
-        gps.close_serial()
-        client.close()               
+        except KeyboardInterrupt:
+            print("Terminating...")
+        except Exception as e:
+            print(f"{'influx_write_thread':<20}: Error: {e}")
+            print(f"{'influx_write_thread':<20}: Retrying now...")
+            client = InfluxDBClient3(host=host, token=token, org=org)
+            ubr = gps.get_reader()
+    gps.close_serial()
+    client.close()      
                 
 def app():
     
