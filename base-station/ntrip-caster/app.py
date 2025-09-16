@@ -26,7 +26,7 @@ def main():
     gps.get_reader()
     com = gps.port
     IPAddr = get_local_ip()
-    IPAddr = "10.155.20.244"
+    IPAddr = "0.0.0.0"
     print(f"Using IP address: {IPAddr}")
 
     # Define the command and arguments
