@@ -79,7 +79,7 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
             try:
                 raw_data, parsed = gnss_rtcm_queue.get()
                 if protocol(raw_data) == RTCM3_PROTOCOL:
-                    # gps.ser.write(raw_data)
+                    gps.ser.write(raw_data)
                     print(f"{'rtcm_process_thread':<20}: Sent to GPS!")
                 else:
                     print(f"{'rtcm_process_thread':<20}: Not RTCM3 data!")
@@ -176,7 +176,7 @@ def app():
         case "premium":
             gps = gps_reader.Premium()
         case "sparkfun":
-            # gps = gps_reader.SparkFun()
+            gps = gps_reader.SparkFun()
             gnss_rtcm_queue = Queue()
             thread_pool.append(
                 Thread(
