@@ -1,7 +1,0 @@
-FROM openjdk:17-jdk-slim
-
-WORKDIR /home/ntrip-client
-
-COPY . /home/ntrip-client
-
-CMD ["java", "-jar", "ntrip-client.jar"]

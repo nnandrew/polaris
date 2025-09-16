@@ -5,6 +5,8 @@ services:
     container_name: ntrip-caster
     volumes:
       - ../base-station/shared:/home/ntrip-caster
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"  # GNSS Receiver
     ports:
       - "2101:2101" # NTRIP
       - "80:80"     # HTTP

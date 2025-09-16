@@ -3,35 +3,35 @@ services:
     build: ./ntrip-client
     # image: polaris/ntrip-client:latest
     container_name: ntrip-client
-#    env_file:
-#      - ../.env
+    env_file:
+      - ../.env
     devices:
       - "/dev/ttyACM0:/dev/ttyACM0"  # GNSS Receiver
     ports:
       - "2101:2101"   # NTRIP
     restart: unless-stopped
-#  enrollment-client:
-#    build: ../lighthouse/enrollment-client
+  enrollment-client:
+    build: ../lighthouse/enrollment-client
     # image: polaris/enrollment-client:latest
-#    container_name: enrollment-client
-#    environment: 
-#      - GROUP_NAME=rover
-#    env_file:
-#      - ../.env
-#    volumes:
-#      - ../rover/shared:/home/enrollment-client/shared
-#    ports:
-#      - "80:80"   # HTTP
-#      - "443:443" # HTTPS
-#    restart: unless-stopped
-#  nebula:
-#    image: nebulaoss/nebula:latest
-#    container_name: nebula
-#    network_mode: "host"
-#    cap_add:
-#      - NET_ADMIN
-#    volumes:
-#      - ../rover/shared:/config
-#    depends_on:
-#      - enrollment-client
-#    restart: unless-stopped
+    container_name: enrollment-client
+    environment: 
+      - GROUP_NAME=rover
+    env_file:
+      - ../.env
+    volumes:
+      - ../rover/shared:/home/enrollment-client/shared
+    ports:
+      - "80:80"   # HTTP
+      - "443:443" # HTTPS
+    restart: unless-stopped
+  nebula:
+    image: nebulaoss/nebula:latest
+    container_name: nebula
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ../rover/shared:/config
+    depends_on:
+      - enrollment-client
+    restart: unless-stopped

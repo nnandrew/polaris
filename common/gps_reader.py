@@ -5,6 +5,7 @@ from pyubx2 import UBXMessage, UBXReader, SET
 class Generic:
     
     ser = None
+    port = None
     
     def get_reader(self, baud, msgs, vid=None, pid=None) -> UBXReader:
 
@@ -18,10 +19,10 @@ class Generic:
                 {port.vid}, {port.pid}, 
             '''.strip())
             try:
-                serial_port = port.device
-                print(serial_port)
-                ser = Serial(serial_port, baud, timeout=1)
-                print(f'This is the name of the opened serial port: {ser.name}')
+                self.port = port.device
+                print(self.port)
+                self.ser = Serial(self.port, baud, timeout=1)
+                print(f'This is the name of the opened serial port: {self.ser.name}')
                 # A Serial point was found, and opened, but was it the right one?
                 if vid and pid: # Only check if vid and pid were passed
                     if port.vid == vid and port.pid == pid:
@@ -34,15 +35,13 @@ class Generic:
             except Exception as e:
                 print(e)
 
-        if ser is None:
+        if self.ser is None:
             raise RuntimeError('No serial port found')
-        else:
-            self.ser = ser
 
         # Configure USB GPS
         for msg in msgs:
-            ser.write(msg.serialize())
-        return UBXReader(ser)
+            self.ser.write(msg.serialize())
+        return UBXReader(self.ser)
 
     def close_serial(self):
         if self.ser is not None and self.ser.is_open:

@@ -1,6 +1,6 @@
 import os
+import sys
 import dotenv
-import gps_reader
 from queue import Queue
 from time import sleep
 from pygnssutils import GNSSNTRIPClient
@@ -22,6 +22,8 @@ from maps import (
     gpsFixOk_map,
     diffSoln_map
 )
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
+import gps_reader
 
 """
 Mount Point AUS_LOFT_GNSS 
@@ -44,7 +46,7 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
         # mountpoint="AUS_LOFT_GNSS",
         # ntripuser="andrewvnguyen@utexas.edu",
         # Private RTK
-        server="100.70.35.29",
+        server="192.168.1.78",
         mountpoint="pygnssutils",
         ntripuser="test",
         # Static Stuff

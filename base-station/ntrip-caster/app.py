@@ -1,68 +1,38 @@
-from pyubx2 import (
-    UBXMessage, 
-    UBXReader, 
-    SET,
-    protocol
-)
-from threading import Event, Thread
-import serial
-from serial.tools.list_ports import comports
 import socket
 import subprocess
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
+import gps_reader
 
+def get_local_ip(timeout: float = 1.0) -> str:
+    """Return the machine's primary IPv4 address (e.g. 10.x.x.x).
 
-def get_serial():
-    BAUD_RATE = 38400
-    msgs = [
-        UBXMessage(
-            "CFG",
-            "CFG-MSG",
-            SET,
-            msgClass=0x01,     # NAV
-            msgID=0x07,        # PVT (Position Velocity Time Solution) 
-            rateUSB=1,         # Enable on USB 
-        ),
-    ]
-    # Got the values from listing all ports and printing their pid and vid
-    vid = 5446
-    pid = 425
-
-    # Configure serial connection
-    ports = comports()
-    ser = None
-
-    # Check every available port
-    for port in ports:
-        print(f'Trying to open this port for serial: {port}')
-        print(f'''
-Port details: {port.description}, {port.device}, {port.name}, {port.usb_description()},
-{port.vid}, {port.pid}, 
-''')
-        try:
-            if vid and pid: # Only check if vid and pid were passed
-                if port.vid == vid and port.pid == pid:
-                    print('Found desired serial port')
-                    return port
-                else:
-                    print('Port was not valid, so viewing next available')
-            else: # assume first opened port was correct and exit loop
-                break
-        except Exception as e:
-            print(e)
-
+    This uses a UDP socket to an external IP (no packets are sent) which
+    forces the OS to choose the outgoing interface. If that fails it
+    falls back to 127.0.0.1.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            # doesn't actually send packets
+            s.settimeout(timeout)
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
 
 def main():
-    comport = get_serial().name
-
-    hostname = socket.gethostname()
-    IPAddr = socket.gethostbyname(hostname)
-
-    print(f'ip address: {IPAddr}')
+    gps = gps_reader.SparkFun()
+    gps.get_reader()
+    com = gps.port
+    IPAddr = get_local_ip()
+    IPAddr = "10.155.20.244"
+    print(f"Using IP address: {IPAddr}")
 
     # Define the command and arguments
     cmd = [
         "gnssserver",
-        "--inport", comport,
+        "--inport", com,
         "--hostip", IPAddr,
         "--outport", "2101",
         "--ntripmode", "1",
