@@ -4,6 +4,7 @@ import gps_reader
 from queue import Queue
 from time import sleep
 from pygnssutils import GNSSNTRIPClient
+from datetime import datetime, timezone
 from threading import (
     Event, 
     Thread
@@ -15,6 +16,11 @@ from influxdb_client_3 import (
 from pyubx2 import (
     protocol,
     RTCM3_PROTOCOL
+)
+from maps import (
+    fixType_map,
+    gpsFixOk_map,
+    diffSoln_map
 )
 
 """
@@ -68,19 +74,10 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
     while not stop_event.is_set():
         if not gnss_rtcm_queue.empty():
             try:
-                raw_data, parsed_data = gnss_rtcm_queue.get()
+                raw_data, parsed = gnss_rtcm_queue.get()
                 if protocol(raw_data) == RTCM3_PROTOCOL:
                     gps.ser.write(raw_data)
                     print(f"{'rtcm_process_thread':<20}: Sent to GPS!")
-                    # rtcm_metadata, rtcm_sats = msm_parser.parse(parsed)
-                    # pprint(rtcm_metadata)
-                    # pprint(rtcm_sats)
-                    # rover_ecef = gnss_reader.getECEF()
-                    # rover_sats = gnss_reader.getSatelliteInfo()
-                    # # pprint(rover_sats)
-                    # calculated_ecef = ecef_solver.solve(rover_ecef, rover_sats, rtcm_metadata, rtcm_sats)
-                    # pprint(rover_ecef)
-                    # pprint(calculated_ecef)
             except Exception as err:
                 print(f"{'rtcm_process_thread':<20}: {err}")
             gnss_rtcm_queue.task_done()
@@ -88,7 +85,7 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
         # print(f"{'rtcm_process_thread':<20}: Alive...")
         
                 
-def influx_write_thread(gps, stop_event):
+def influx_write_thread(GPS_TYPE, gps, stop_event):
     print(f"{'influx_write_thread':<20}: Starting...")
     dotenv.load_dotenv()
     token = os.getenv("INFLUXDB_TOKEN") if os.getenv("INFLUXDB_TOKEN") else 'XgXNV68VYCQHUUQrklj2FUkZ3cdKhd1xG9PxjDb3nZh36tqNkp3p10DKKdiHGYWb1ENqy27yz_q-WrR9_asA_w=='
@@ -100,47 +97,51 @@ def influx_write_thread(gps, stop_event):
 
     try:
         while not stop_event.is_set():
-            raw_data, parsed_data = ubr.read()
+            raw, parsed = ubr.read()
 
-            if parsed_data is None:
+            if parsed is None:
                 print(f"{'influx_write_thread':<20}: No data received")
-            elif parsed_data.identity == 'NAV-PVT':
-                # Log parsed data to InfluxDB
-                if parsed_data.fixType != 0:
-                    database="GPS"
-                    points = Point("metrics") \
-                        .tag("device", "budget") \
-                        .field("latitude", parsed_data.lat) \
-                        .field("longitude", parsed_data.lon) \
-                        .field("altitude_m", parsed_data.hMSL/1000) \
-                        .field("ground_speed_ms", parsed_data.gSpeed / 1000) \
-                        .field("ground_heading_deg", parsed_data.headMot) \
-                        .field("horizontal_accuracy_m", parsed_data.hAcc/1000) \
-                        .field("vertical_accuracy_m", parsed_data.vAcc/1000) \
-                        .field("speed_accuracy_ms", parsed_data.sAcc/1000) \
-                        .field("heading_accuracy_deg", parsed_data.headAcc)
-                    client.write(database=database, record=points, write_precision="s")
-                    fix_map = {
-                        0: "No fix",
-                        1: "Dead reckoning only", 
-                        2: "2D fix",
-                        3: "3D fix",
-                        4: "GNSS + dead reckoning combined",
-                        5: "Time only fix"
-                    }
-                    diff_map = {
-                        0: "No differential corrections",
-                        1: "Differential corrections applied"
-                    }
-                    print(f"{'influx_write_thread':<20}: {fix_map.get(int(parsed_data.fixType))}")
-                    print(f"{'influx_write_thread':<20}: {diff_map.get(parsed_data.diffSoln)}")
-                    print(f"{'influx_write_thread':<20}: Latitude: {parsed_data.lat}")
-                    print(f"{'influx_write_thread':<20}: Longitude: {parsed_data.lon}")
-                # else:
-                    # print(f'Parsed data does not have fix type set: {parsed_data.fixType}')
-            # else:
-            #     print(f'Ignoring data with identity: {parsed_data.identity}')
-            # print(f"{'influx_write_thread':<20}: Alive...")
+            elif parsed.identity == 'NAV-PVT':
+                # Log datapoint with GPS Type
+                points = Point("metrics") \
+                    .tag("device", GPS_TYPE)
+                # Log positional data if a fix is available
+                if parsed.gnssFixOk:
+                    points.field("latitude", parsed.lat) \
+                          .field("longitude", parsed.lon) \
+                          .field("altitude_m", parsed.hMSL/1000) \
+                          .field("ground_speed_ms", parsed.gSpeed / 1000) \
+                          .field("ground_heading_deg", parsed.headMot) \
+                          .field("horizontal_accuracy_m", parsed.hAcc/1000) \
+                          .field("vertical_accuracy_m", parsed.vAcc/1000) \
+                          .field("speed_accuracy_ms", parsed.sAcc/1000) \
+                          .field("heading_accuracy_deg", parsed.headAcc)
+                    print(f"{'influx_write_thread':<20}: Latitude: {parsed.lat}")
+                    print(f"{'influx_write_thread':<20}: Longitude: {parsed.lon}")
+                # Log fix type and status
+                points.field("fix_type_int", int(parsed.fixType)) \
+                      .field("fix_ok_int", int(parsed.gnssFixOk)) \
+                      .field("differential_solution_int", int(parsed.diffSoln))
+                # Log true time if available
+                dt = datetime(
+                    year=parsed.year,
+                    month=parsed.month,
+                    day=parsed.day,
+                    hour=parsed.hour,
+                    minute=parsed.min,
+                    second=parsed.second,
+                    tzinfo=timezone.utc  # UBX timestamps are UTC
+                )
+                if parsed.validTime and parsed.validDate:
+                    points.time(int(dt.timestamp() * 1e9))
+                client.write(database="GPS", record=points, write_precision="s")                
+                # Debug Prints
+                print(f'{'influx_write_thread':<20}: {fixType_map.get(int(parsed.fixType))}')
+                print(f'{'influx_write_thread':<20}: {gpsFixOk_map.get(int(parsed.gnssFixOk))}')
+                print(f'{'influx_write_thread':<20}: {diffSoln_map.get(int(parsed.diffSoln))}')
+                print(f'{'influx_write_thread':<20}: ValidTime: {parsed.validTime}')
+                print(f'{'influx_write_thread':<20}: ValidDate: {parsed.validDate}')
+                print(f"{'influx_write_thread':<20}: {dt.isoformat()}")
                 
     except KeyboardInterrupt:
         print("Terminating...")
@@ -152,36 +153,48 @@ def app():
     
     print("Starting NTRIP Client...")
     
-    # initialize structures
-    gnss_rtcm_queue = Queue()
+    thread_pool = []
+    gps = None
     stop_event = Event()
     
     # Configure GPS
-    # gps = gps_reader.Budget()
-    # gps = gps_reader.Premium()
-    gps = gps_reader.SparkFun()
-
-    # define the threads which will run in the background until terminated by user
-    nt = Thread(
-        target=rtcm_get_thread,
-        args=(gnss_rtcm_queue, stop_event),
-        daemon=True
-    )
-    pt = Thread(
-        target=rtcm_process_thread,
-        args=(gnss_rtcm_queue, gps, stop_event),
-        daemon=True
-    )
-    it = Thread(
-        target=influx_write_thread,
-        args=(gps, stop_event),
-        daemon=True
-    )
+    # GPS_TYPE = "budget"
+    # GPS_TYPE = "premium"
+    GPS_TYPE = "sparkfun"
+      
+    match GPS_TYPE:
+        case "budget":
+            gps = gps_reader.Budget()
+        case "premium":
+            gps = gps_reader.Premium()
+        case "sparkfun":
+            gps = gps_reader.SparkFun()
+            gnss_rtcm_queue = Queue()
+            thread_pool.append(
+                Thread(
+                    target=rtcm_get_thread,
+                    args=(gnss_rtcm_queue, stop_event),
+                    daemon=True
+                )
+            )
+            thread_pool.append(
+                Thread(
+                    target=rtcm_process_thread,
+                    args=(gnss_rtcm_queue, gps, stop_event),
+                    daemon=True
+                )
+            )
     
-    # # start the threads
-    nt.start()
-    pt.start()
-    it.start()
+    thread_pool.append(
+        Thread(
+            target=influx_write_thread,
+            args=(GPS_TYPE, gps, stop_event),
+            daemon=True
+        )
+    )        
+    # start the threads
+    for t in thread_pool:
+        t.start()
 
     print(f"{'main_thread':<20}: NTRIP client and processor threads started - press CTRL-C to terminate...")
     
@@ -198,9 +211,8 @@ def app():
         print(f"{'main_thread':<20}: NTRIP client terminated by user, waiting for data processing to complete...")
 
     # wait for final queued tasks to complete
-    nt.join()
-    pt.join()
-    it.join()
+    for t in thread_pool:
+        t.join()
 
     print(f"{'main_thread':<20}: Data processing complete.")
 
