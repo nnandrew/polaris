@@ -3,12 +3,12 @@ datasources:
   - name: influxdb-cloud
     type: influxdb
     access: proxy
-    url: https://us-east-1-1.aws.cloud2.influxdata.com
+    url: ${INFLUXDB_URL}
     jsonData:
       version: SQL
       dbName: GPS
       httpMode: POST
       insecureGrpc: false
     secureJsonData:
-      token: XgXNV68VYCQHUUQrklj2FUkZ3cdKhd1xG9PxjDb3nZh36tqNkp3p10DKKdiHGYWb1ENqy27yz_q-WrR9_asA_w==
+      token: ${INFLUXDB_TOKEN}
     isDefault: true

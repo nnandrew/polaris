@@ -4,7 +4,7 @@ services:
     # image: polaris/ntrip-client:latest
     container_name: ntrip-client
     env_file:
-      - ../.env
+     - .env
     devices:
       - "/dev/ttyACM0:/dev/ttyACM0"  # GNSS Receiver
     ports:

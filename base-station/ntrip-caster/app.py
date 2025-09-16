@@ -1,31 +1,15 @@
-import socket
 import subprocess
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
 import gps_reader
-
-def get_local_ip(timeout: float = 1.0) -> str:
-    """Return the machine's primary IPv4 address (e.g. 10.x.x.x).
-
-    This uses a UDP socket to an external IP (no packets are sent) which
-    forces the OS to choose the outgoing interface. If that fails it
-    falls back to 127.0.0.1.
-    """
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            # doesn't actually send packets
-            s.settimeout(timeout)
-            s.connect(("8.8.8.8", 80))
-            return s.getsockname()[0]
-    except Exception:
-        return "127.0.0.1"
+import ip_getter
 
 def main():
     gps = gps_reader.SparkFun()
     gps.get_reader()
     com = gps.port
-    IPAddr = get_local_ip()
+    IPAddr = ip_getter.get_local_ip()
     IPAddr = "0.0.0.0"
     print(f"Using IP address: {IPAddr}")
 

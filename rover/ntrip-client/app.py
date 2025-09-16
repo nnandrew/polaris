@@ -24,6 +24,7 @@ from maps import (
 )
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
 import gps_reader
+import ip_getter
 
 """
 Mount Point AUS_LOFT_GNSS 
@@ -46,7 +47,7 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
         # mountpoint="AUS_LOFT_GNSS",
         # ntripuser="andrewvnguyen@utexas.edu",
         # Private RTK
-        server="192.168.1.78",
+        server="10.159.68.18",
         mountpoint="pygnssutils",
         ntripuser="test",
         # Static Stuff
@@ -78,8 +79,10 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
             try:
                 raw_data, parsed = gnss_rtcm_queue.get()
                 if protocol(raw_data) == RTCM3_PROTOCOL:
-                    gps.ser.write(raw_data)
+                    # gps.ser.write(raw_data)
                     print(f"{'rtcm_process_thread':<20}: Sent to GPS!")
+                else:
+                    print(f"{'rtcm_process_thread':<20}: Not RTCM3 data!")
             except Exception as err:
                 print(f"{'rtcm_process_thread':<20}: {err}")
             gnss_rtcm_queue.task_done()
@@ -90,7 +93,7 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
 def influx_write_thread(GPS_TYPE, gps, stop_event):
     print(f"{'influx_write_thread':<20}: Starting...")
     dotenv.load_dotenv()
-    token = os.getenv("INFLUXDB_TOKEN") if os.getenv("INFLUXDB_TOKEN") else 'XgXNV68VYCQHUUQrklj2FUkZ3cdKhd1xG9PxjDb3nZh36tqNkp3p10DKKdiHGYWb1ENqy27yz_q-WrR9_asA_w=='
+    token = os.getenv("INFLUXDB_TOKEN")
     org = "GPSSensorData"
     host = "https://us-east-1-1.aws.cloud2.influxdata.com"
     client = InfluxDBClient3(host=host, token=token, org=org)
@@ -154,6 +157,9 @@ def influx_write_thread(GPS_TYPE, gps, stop_event):
 def app():
     
     print("Starting NTRIP Client...")
+    # determine the machine's IP address (not localhost)
+    local_ip = ip_getter.get_local_ip()
+    print(f"{'main_thread':<20}: Local IP: {local_ip}")
     
     thread_pool = []
     gps = None
@@ -170,7 +176,7 @@ def app():
         case "premium":
             gps = gps_reader.Premium()
         case "sparkfun":
-            gps = gps_reader.SparkFun()
+            # gps = gps_reader.SparkFun()
             gnss_rtcm_queue = Queue()
             thread_pool.append(
                 Thread(

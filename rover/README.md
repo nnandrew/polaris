@@ -1,35 +1,24 @@
 # Rover
-A 5G-enabled NTRIP client and RTK GPS.
 
-# Purpose
+An NTRIP client, RTCM sender, GPS receiver, and InfluxDB writer app.
 
-# Prerequisites
+## Prerequisites
 
-# Setup
+Navigate to https://cloud2.influxdata.com/ and gather the required secrets.
 
-## Creating Docker Image
+Create a `polaris/rover/.env` containing:
 
-Use this command to build an image for the RB5
-```bash
-docker build -t <tag> . --platform linux/arm64 
-```
-Replace the tag with the Docker-Repository/etc.
-
-### Uploading the Image to a Docker Repository
-```bash
-docker push <tag>
+```yaml
+INFLUXDB_URL = "URL"
+INFLUXDB_TOKEN = "API_KEY"
 ```
 
-# Usage
+## Usage
 
-## Pulling Docker Image from Repository
+Configure GPS_TYPE and NTRIP Server in `polaris/rover/ntrip-client/app.py`.
+
+Then run:
+
 ```bash
-docker pull <tag>
+docker-compose up --build
 ```
-
-## Running Image
-The privileged tag exposes all the devices ports to docker. 
-```bash
-docker run --privileged -it <tag>
-```
-
