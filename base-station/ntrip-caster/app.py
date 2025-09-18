@@ -1,3 +1,9 @@
+"""
+NTRIP Caster Application.
+
+This script initializes a GPS device, determines the local IP address, and
+starts the `gnssserver` process to broadcast GNSS data as an NTRIP caster.
+"""
 import subprocess
 import os
 import sys
@@ -6,49 +12,43 @@ import gps_reader
 import ip_getter
 
 def main():
+    """
+    Initializes the GPS, gets the IP address, and starts the gnssserver.
+    """
     gps = gps_reader.SparkFun()
     gps.get_reader()
     com = gps.port
-    IPAddr = ip_getter.get_local_ip()
-    IPAddr = "0.0.0.0"
-    print(f"Using IP address: {IPAddr}")
+    # Binds to all available interfaces
+    ip_addr = "0.0.0.0"
+    print(f"Using IP address: {ip_addr}")
 
-    # Define the command and arguments
+    # Define the command and arguments to start the NTRIP caster
     cmd = [
         "gnssserver",
         "--inport", com,
-        "--hostip", IPAddr,
+        "--hostip", ip_addr,
         "--outport", "2101",
-        "--ntripmode", "1",
-        "--protfilter", "4",
-        "--format", "2",
+        "--ntripmode", "1",      # NTRIP Caster mode
+        "--protfilter", "4",     
+        "--format", "2",         # Raw binary
         "--ntripuser", "test",
         "--ntrippassword", "none",
-        "--verbosity", "2",
+        "--verbosity", "2",      # Verbose output
     ]
 
-    # Start the process and stream output
-    process = subprocess.Popen(
-        cmd
-        # ,
-        # stdout=subprocess.PIPE,
-        # stderr=subprocess.PIPE,
-        # text=True  # decode bytes to str
-    )
+    # Start the gnssserver process
+    process = subprocess.Popen(cmd)
 
     print("gnssserver started (PID:", process.pid, ")")
-
-    # Stream logs in real time
-    # try:
-    #     for line in process.stdout:
-    #         print(line, end="")  # already includes newline
-    # except KeyboardInterrupt:
-    #     print("\nStopping gnssserver...")
-    #     process.terminate()
-    process.wait()
-
-    # start
     print("Base station running - press CTRL-C to terminate...")
+    
+    try:
+        # Wait for the process to complete. 
+        # This will block until the process is terminated.
+        process.wait()
+    except KeyboardInterrupt:
+        print("\nStopping gnssserver...")
+        process.terminate()
 
 
 if __name__ == "__main__":

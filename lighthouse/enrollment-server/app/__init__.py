@@ -1,15 +1,38 @@
-import flask
-from .routes import main_bp 
-import dotenv
-import requests
+"""
+Flask application factory for the Nebula Enrollment Server.
+
+This module is responsible for creating and configuring the Flask application,
+as well as performing essential one-time setup tasks for the Lighthouse.
+"""
+
 import subprocess
 import os
 import tarfile
-from app import nebula
 import sqlite3
+import dotenv
+import requests
+import flask
+from .routes import main_bp 
+from app import nebula
 
 def create_app():
+    """
+    Creates and configures a Flask application instance and performs initial setup.
 
+    This factory function handles the following setup procedures:
+    1.  Initializes the Flask app and loads configuration from environment variables.
+    2.  Registers the main API blueprint.
+    3.  Changes the working directory to `./shared`.
+    4.  Downloads and extracts the 'nebula-cert' utility if it's not present.
+    5.  Generates a Nebula Certificate Authority (CA) key and certificate if they
+        do not already exist.
+    6.  Initializes a SQLite database (`record.db`) to track enrolled hosts.
+    7.  Generates the initial Nebula configuration file (`config.yml`) for the
+        Lighthouse node itself if it doesn't exist.
+
+    Returns:
+        flask.Flask: The configured Flask application instance.
+    """
     # Configure Flask App
     app = flask.Flask(__name__)
     dotenv.load_dotenv()

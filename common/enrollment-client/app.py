@@ -1,3 +1,18 @@
+"""
+Nebula Enrollment Client.
+
+This script acts as a client to enroll with the Lighthouse server and receive a
+Nebula network configuration file (`config.yml`). It runs in a continuous loop,
+periodically checking if the configuration file exists. If not, it sends a GET
+request to the enrollment server's API.
+
+The client requires the following environment variables to be set:
+- `NETWORK_KEY`: A secret key to authenticate with the enrollment server.
+- `LIGHTHOUSE_PUBLIC_IP`: The public IP address of the Lighthouse server.
+- `GROUP_NAME`: The Nebula security group this client should belong to.
+
+The script will place the received `config.yml` in the `./shared/` directory.
+"""
 import os
 import time
 import dotenv
@@ -42,7 +57,7 @@ if __name__ == '__main__':
                     with open(config_path, 'wb') as file:
                         for chunk in response.iter_content(chunk_size=8192):
                             file.write(chunk)
-                    logger.info("GET request successful.")
+                    logger.info("GET request successful. Nebula config received.")
                 else:
                     logger.warning(f"Request failed with status code {response.status_code}. Retrying in {BACKOFF_TIME} seconds.")
             except requests.RequestException as e:

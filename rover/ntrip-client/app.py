@@ -1,3 +1,19 @@
+"""
+Rover NTRIP Client Application.
+
+This multi-threaded application connects to an NTRIP caster to receive RTCM
+correction data, applies it to a local GPS device, and logs the resulting
+high-precision location data to an InfluxDB database.
+
+The application consists of three main threads:
+1. `rtcm_get_thread`: Connects to the NTRIP caster and fetches RTCM data.
+2. `rtcm_process_thread`: Forwards the fetched RTCM data to the GPS device.
+3. `influx_write_thread`: Reads `NAV-PVT` messages from the GPS, and writes
+   the location data to InfluxDB.
+
+The script is configured via a `GPS_TYPE` variable and environment variables
+for InfluxDB credentials. It is designed to be terminated with CTRL-C.
+"""
 import os
 import sys
 import dotenv
@@ -26,31 +42,30 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
 import gps_reader
 import ip_getter
 
-"""
-Mount Point AUS_LOFT_GNSS 
-    Distance: 7km
-    Messages: https://www.use-snip.com/kb/knowledge-base/rtcm-3-message-list/
-        RTCM 1074 GPS MSM4
-        RTCM 1084 GLONASS MSM4
-        RTCM 1094 Galileo MSM4
-        RTCM 1124 BeiDou MSM4
-MSM4 Components: https://www.tersus-gnss.com/tech_blog/new-additions-in-rtcm3-and-What-is-msm
-    Full GPS Pseudoranges, Phaseranges, Carrier-to-Noise Ratio
-"""
-
 def rtcm_get_thread(gnss_rtcm_queue, stop_event):
+    """
+    Connects to an NTRIP caster and streams RTCM data into a queue.
+
+    This function runs the `GNSSNTRIPClient` in a blocking manner. The client
+    is configured to connect to the private RTK base station and place all
+
+    incoming RTCM data into the provided queue.
+
+    Args:
+        gnss_rtcm_queue (Queue): The queue to which RTCM data will be added.
+        stop_event (Event): A threading event to signal when to stop.
+    """
     print(f"{'rtcm_get_thread':<20}: Starting...")
     gnc = GNSSNTRIPClient()
     gnc.run(
-        # Public RTK
+        # Public RTK (7km away, unreliable)
         # server="rtk2go.com",
         # mountpoint="AUS_LOFT_GNSS",
         # ntripuser="andrewvnguyen@utexas.edu",
         # Private RTK
-        # server="192.168.100.11",
-        # mountpoint="pygnssutils",
-        # ntripuser="test",
-        # Static Stuff
+        server="192.168.100.11", # Private RTK, TODO: get with /api/ntrip
+        mountpoint="pygnssutils",
+        ntripuser="test",
         ntrippassword="none",
         port=2101,
         https=0,
@@ -66,31 +81,50 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     )
     while not stop_event.is_set():
         sleep(10)
-        # print(f"{'rtcm_get_thread':<20}: Alive...")
         
 def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
     """
-    THREADED
-    Reads RTCM3 data from message queue and sends it to receiver.
+    Reads RTCM3 data from a queue and sends it to the GPS device.
+
+    This function runs in a loop, checking the queue for new data. If valid
+    RTCM3 data is found, it is written directly to the GPS device's serial port
+    to enable RTK corrections.
+
+    Args:
+        gnss_rtcm_queue (Queue): The queue from which to get RTCM data.
+        gps (gps_reader.Generic): The GPS reader instance with an open serial port.
+        stop_event (Event): A threading event to signal when to stop.
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
     while not stop_event.is_set():
         if not gnss_rtcm_queue.empty():
             try:
-                raw_data, parsed = gnss_rtcm_queue.get()
+                raw_data, _ = gnss_rtcm_queue.get()
                 if protocol(raw_data) == RTCM3_PROTOCOL:
                     gps.ser.write(raw_data)
                     print(f"{'rtcm_process_thread':<20}: Sent to GPS!")
                 else:
-                    print(f"{'rtcm_process_thread':<20}: Not RTCM3 data!")
+                    print(f"{'rtcm_process_thread':<20}: Discarding non-RTCM3 data.")
             except Exception as err:
                 print(f"{'rtcm_process_thread':<20}: {err}")
             gnss_rtcm_queue.task_done()
-            sleep(1)
-        # print(f"{'rtcm_process_thread':<20}: Alive...")
+        sleep(1) # Prevent busy-waiting
         
                 
-def influx_write_thread(GPS_TYPE, gps, stop_event):
+def influx_write_thread(gps_type, gps, stop_event):
+    """
+    Reads parsed UBX NAV-PVT data from the GPS and writes it to InfluxDB.
+
+    This function continuously reads from the GPS device. When a `NAV-PVT`
+    (Position, Velocity, Time) message is received, it extracts key metrics,
+    formats them as a data point, and writes them to the InfluxDB "GPS"
+    database.
+
+    Args:
+        gps_type (str): The type of GPS device (e.g., "sparkfun").
+        gps (gps_reader.Generic): The GPS reader instance.
+        stop_event (Event): A threading event to signal when to stop.
+    """
     print(f"{'influx_write_thread':<20}: Starting...")
     dotenv.load_dotenv()
     token = os.getenv("INFLUXDB_TOKEN")
@@ -101,15 +135,11 @@ def influx_write_thread(GPS_TYPE, gps, stop_event):
 
     while not stop_event.is_set():
         try:
-            raw, parsed = ubr.read()
+            _, parsed = ubr.read()
 
-            if parsed is None:
-                print(f"{'influx_write_thread':<20}: No data received")
-            elif parsed.identity == 'NAV-PVT':
-                # Log datapoint with GPS Type
-                points = Point("metrics") \
-                    .tag("device", GPS_TYPE)
-                # Log positional data if a fix is available
+            if parsed and parsed.identity == 'NAV-PVT':
+                points = Point("metrics").tag("device", gps_type)
+                
                 if parsed.gnssFixOk:
                     points.field("latitude", parsed.lat) \
                           .field("longitude", parsed.lon) \
@@ -126,51 +156,45 @@ def influx_write_thread(GPS_TYPE, gps, stop_event):
                 points.field("fix_type_int", int(parsed.fixType)) \
                       .field("fix_ok_int", int(parsed.gnssFixOk)) \
                       .field("differential_solution_int", int(parsed.diffSoln))
-                # Log true time if available
-                dt = datetime(
-                    year=parsed.year,
-                    month=parsed.month,
-                    day=parsed.day,
-                    hour=parsed.hour,
-                    minute=parsed.min,
-                    second=parsed.second,
-                    tzinfo=timezone.utc  # UBX timestamps are UTC
-                )
+
                 if parsed.validTime and parsed.validDate:
+                    dt = datetime(
+                        year=parsed.year, month=parsed.month, day=parsed.day,
+                        hour=parsed.hour, minute=parsed.min, second=parsed.second,
+                        tzinfo=timezone.utc
+                    )
                     points.time(int(dt.timestamp() * 1e9))
+
                 client.write(database="GPS", record=points, write_precision="s")                
-                # Debug Prints
-                print(f'{'influx_write_thread':<20}: {fixType_map.get(int(parsed.fixType))}')
-                print(f'{'influx_write_thread':<20}: {gpsFixOk_map.get(int(parsed.gnssFixOk))}')
-                print(f'{'influx_write_thread':<20}: {diffSoln_map.get(int(parsed.diffSoln))}')
-                print(f'{'influx_write_thread':<20}: ValidTime: {parsed.validTime}')
-                print(f'{'influx_write_thread':<20}: ValidDate: {parsed.validDate}')
-                print(f"{'influx_write_thread':<20}: {dt.isoformat()}")
+                print(f"{'influx_write_thread':<20}: Wrote valid NAV-PVT data to InfluxDB.")
                 
-        except KeyboardInterrupt:
-            print("Terminating...")
+        except (KeyboardInterrupt, SystemExit):
+            break
         except Exception as e:
-            print(f"{'influx_write_thread':<20}: Error: {e}")
-            print(f"{'influx_write_thread':<20}: Retrying now...")
+            print(f"{'influx_write_thread':<20}: Error: {e}. Re-initializing...")
+            # Attempt to re-initialize connections on error
             client = InfluxDBClient3(host=host, token=token, org=org)
             ubr = gps.get_reader()
+            
     gps.close_serial()
     client.close()      
                 
 def app():
+    """
+    Main application function to set up and run the NTRIP client threads.
     
+    Initializes the appropriate GPS reader based on the `GPS_TYPE` setting,
+    creates and starts the necessary threads for data fetching, processing,
+
+    and logging, and then waits for a `KeyboardInterrupt` to terminate.
+    """
     print("Starting NTRIP Client...")
-    # determine the machine's IP address (not localhost)
-    local_ip = ip_getter.get_local_ip()
-    print(f"{'main_thread':<20}: Local IP: {local_ip}")
     
     thread_pool = []
     gps = None
     stop_event = Event()
     
-    # Configure GPS
-    # GPS_TYPE = "budget"
-    # GPS_TYPE = "premium"
+    # Configure GPS type
     GPS_TYPE = "sparkfun"
       
     match GPS_TYPE:
@@ -203,32 +227,25 @@ def app():
             daemon=True
         )
     )        
-    # start the threads
+    # Start the threads
     for t in thread_pool:
         t.start()
 
-    print(f"{'main_thread':<20}: NTRIP client and processor threads started - press CTRL-C to terminate...")
+    print(f"{'main_thread':<20}: Threads started, press CTRL-C to terminate...")
     
-    # Idle Parent Thread
     try:
-        while True:
-            # Interrupt interval
-            sleep(10)
-            # print(f"{'main_thread':<20}: Alive...")
+        while not stop_event.is_set():
+            sleep(1)
             
-    except KeyboardInterrupt:
-        # stop the threads
+    except (KeyboardInterrupt, SystemExit):
         stop_event.set()
-        print(f"{'main_thread':<20}: NTRIP client terminated by user, waiting for data processing to complete...")
+        print(f"\n{'main_thread':<20}: Termination signal received, shutting down threads...")
 
-    # wait for final queued tasks to complete
     for t in thread_pool:
         t.join()
 
-    print(f"{'main_thread':<20}: Data processing complete.")
+    print(f"{'main_thread':<20}: All threads have finished.")
 
 if __name__ == "__main__":
-    print(f"{'main_thread':<20}: Starting NTRIP Client...")
     app()
-    
-print(f"{'main_thread':<20}: NTRIP Client terminated.")
+    print(f"{'main_thread':<20}: NTRIP Client terminated.")

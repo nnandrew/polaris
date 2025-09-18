@@ -20,3 +20,18 @@ services:
     depends_on:
       - enrollment-server
     restart: unless-stopped
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - ./grafana-config/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana-config/dashboards:/var/lib/grafana/dashboards
+      - ./grafana-config/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-config/dashboard_provisioning.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

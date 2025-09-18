@@ -1,3 +1,11 @@
+"""
+Nebula Configuration Generation Module.
+
+This module provides the functionality to dynamically generate Nebula configuration
+files for new nodes wishing to join the mesh network. It interacts with the
+`nebula-cert` utility to create certificates and keys, and it persists host
+information in a SQLite database.
+"""
 import os
 import subprocess
 import sqlite3
@@ -10,7 +18,31 @@ yaml.preserve_quotes = True
 yaml.default_flow_style = True
 
 def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
+    """
+    Generates a complete Nebula configuration file for a new node.
+
+    This function performs the following steps:
+    1.  Loads a base configuration from `config-template.yaml`.
+    2.  Assigns a new VPN IP address from the 192.168.100.0/24 subnet.
+    3.  Records the new host's IP and group name in the `record.db` database.
+    4.  Calls `nebula-cert` to sign a new certificate for the host.
+    5.  Reads the CA certificate, host certificate, and host key from files.
+    6.  Embeds the certificate and key content directly into the configuration.
+    7.  Deletes the temporary host certificate and key files.
+    8.  Sets the static host map to point to the lighthouse's public IP.
+    9.  Adjusts settings based on whether the node is a lighthouse or a regular host.
+    10. Writes the final configuration to a unique YAML file.
+
+    Args:
+        group_name (str): The name of the Nebula security group for the new node.
+        LIGHTHOUSE_PUBLIC_IP (str): The public IP address of the lighthouse node.
+
+    Returns:
+        str: The file path to the newly generated configuration file.
     
+    Raises:
+        Exception: If the network runs out of available IP addresses (max 254).
+    """
     # Load Configuration Template
     with open("../config-template.yaml", "r") as config_file:
         config = yaml.load(config_file)
@@ -22,7 +54,8 @@ def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
         host_id = 1
     else:
         cursor.execute("SELECT MAX(id) FROM hosts")
-        host_id = int(cursor.fetchone()[0]) + 1
+        result = cursor.fetchone()
+        host_id = (int(result[0]) if result and result[0] is not None else 1) + 1
         if host_id > 254:
             raise Exception("Network full.")
     
@@ -53,19 +86,18 @@ def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
     os.remove(f"./{host_id}.crt")
     os.remove(f"./{host_id}.key")
         
-    # Lighthouse Configuration and File Writing
+    # Lighthouse Configuration
     config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{LIGHTHOUSE_PUBLIC_IP}:4242")]
     if group_name == "lighthouse":
         config["lighthouse"]["am_lighthouse"] = True
         config["lighthouse"]["hosts"] = ""
         config_path = "/home/enrollment-server/shared/config.yml"
-        with open(config_path, "w") as config_file:
-            yaml.dump(config, config_file)
     else: 
         config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
-        with open(config_path, "w") as config_file:
-            yaml.dump(config, config_file)  
     
+    # File Writing
+    with open(config_path, "w") as config_file:
+        yaml.dump(config, config_file)       
     current_app.logger.info(f"Certificate on {vpn_ip} generated for {group_name}.")
 
     return config_path

@@ -11,7 +11,7 @@ services:
       - "2101:2101"   # NTRIP
     restart: unless-stopped
   enrollment-client:
-    build: ../lighthouse/enrollment-client
+    build: ../common/enrollment-client
     # image: polaris/enrollment-client:latest
     container_name: enrollment-client
     environment: 

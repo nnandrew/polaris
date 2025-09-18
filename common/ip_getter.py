@@ -1,11 +1,18 @@
 import socket
 
 def get_local_ip(timeout: float = 1.0) -> str:
-    """Return the machine's primary IPv4 address (e.g. 10.x.x.x).
+    """Gets the primary local IP address of the machine.
 
-    This uses a UDP socket to an external IP (no packets are sent) which
-    forces the OS to choose the outgoing interface. If that fails it
-    falls back to 127.0.0.1.
+    This function determines the local IP address by creating a UDP socket and
+    connecting to an external address (Google's DNS). This forces the OS to
+    select the appropriate network interface. No actual data is sent.
+
+    Args:
+        timeout (float): The socket timeout in seconds. Defaults to 1.0.
+
+    Returns:
+        str: The local IPv4 address as a string, or "127.0.0.1" if the
+             lookup fails.
     """
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:

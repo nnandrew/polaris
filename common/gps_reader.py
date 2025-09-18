@@ -3,37 +3,44 @@ from serial.tools.list_ports import comports
 from pyubx2 import UBXMessage, UBXReader, SET
 
 class Generic:
+    """A generic GPS reader for u-blox devices."""
     
     ser = None
     port = None
     
     def get_reader(self, baud, msgs, vid=None, pid=None) -> UBXReader:
+        """Finds, configures, and returns a UBXReader for a connected u-blox device.
 
+        This method scans available serial ports, identifies the correct one (optionally
+        by vendor and product ID), configures it with the provided settings, and
+        returns a UBXReader object for data consumption.
+
+        Args:
+            baud (int): The baud rate for the serial connection.
+            msgs (list): A list of UBXMessage objects to configure the device.
+            vid (int, optional): The vendor ID of the USB device. Defaults to None.
+            pid (int, optional): The product ID of the USB device. Defaults to None.
+
+        Returns:
+            UBXReader: A UBXReader instance for the configured serial port.
+
+        Raises:
+            RuntimeError: If no suitable serial port is found.
+        """
         # Configure serial connection
         ports = comports()
         # Check every available port
         for port in ports:
-            print(f'Trying to open this port for serial: {port}')
-            print(f'''
-                `Port details: {port.description}, {port.device}, {port.name}, {port.usb_description()},
-                {port.vid}, {port.pid}, 
-            '''.strip())
             try:
+                # If vid and pid are provided, check for a match
+                if (vid and pid) and (port.vid != vid or port.pid != pid):
+                    continue
                 self.port = port.device
-                print(self.port)
                 self.ser = Serial(self.port, baud, timeout=1)
-                print(f'This is the name of the opened serial port: {self.ser.name}')
-                # A Serial point was found, and opened, but was it the right one?
-                if vid and pid: # Only check if vid and pid were passed
-                    if port.vid == vid and port.pid == pid:
-                        print('Found desired serial port')
-                        break
-                    else:
-                        print('Port was not valid, so viewing next available')
-                else: # assume first opened port was correct and exit loop
-                    break
+                # If we reach here, a port has been successfully opened.
+                break 
             except Exception as e:
-                print(e)
+                print(f"Error opening port {port.device}: {e}")
 
         if self.ser is None:
             raise RuntimeError('No serial port found')
@@ -44,13 +51,20 @@ class Generic:
         return UBXReader(self.ser)
 
     def close_serial(self):
+        """Closes the serial connection if it is open."""
         if self.ser is not None and self.ser.is_open:
             self.ser.close()
         else:
-            print(f'Serial port ${self.ser} not closed')
+            print(f'Serial port {self.ser} was not open.')
 
 class Budget(Generic):
+    """A GPS reader specifically for the u-blox 7 module."""
     def get_reader(self) -> UBXReader:
+        """Configures and returns a UBXReader for a budget device.
+
+        Returns:
+            UBXReader: A UBXReader instance for the budget GPS device.
+        """
         BAUD_RATE = 38400
         msgs = [
             UBXMessage(
@@ -62,10 +76,16 @@ class Budget(Generic):
                 rateUSB=1,         # Enable on USB
             ),
         ]
-        return Generic.get_reader(self, BAUD_RATE, msgs)
+        return super().get_reader(BAUD_RATE, msgs)
 
 class Premium(Generic):
+    """A GPS reader specifically for the u-blox M10 module."""
     def get_reader(self) -> UBXReader:
+        """Configures and returns a UBXReader for a premium device.
+
+        Returns:
+            UBXReader: A UBXReader instance for the premium GPS device.
+        """
         BAUD_RATE = 38400
         msgs = [
             UBXMessage(
@@ -74,13 +94,22 @@ class Premium(Generic):
                 SET,
                 msgClass=0x01,     # NAV
                 msgID=0x07,        # PVT (Position Velocity Time Solution) 
-                rateUART1=1,       # Enable on USB 
+                rateUART1=1,       # Enable on USB?
             ),
         ]
-        return Generic.get_reader(self, BAUD_RATE, msgs)
+        return super().get_reader(BAUD_RATE, msgs)
         
 class SparkFun(Generic):
+    """A GPS reader specifically for the u-blox ZED-FP9 module."""
     def get_reader(self) -> UBXReader:
+        """Configures and returns a UBXReader for a SparkFun device.
+
+        This method identifies the SparkFun device by its specific vendor and
+        product ID.
+
+        Returns:
+            UBXReader: A UBXReader instance for the SparkFun GPS device.
+        """
         BAUD_RATE = 38400
         msgs = [
             UBXMessage(
@@ -95,4 +124,4 @@ class SparkFun(Generic):
         # Got the values from listing all ports and printing their pid and vid
         vid = 5446
         pid = 425
-        return Generic.get_reader(self, BAUD_RATE, msgs, vid, pid)
+        return super().get_reader(BAUD_RATE, msgs, vid, pid)
