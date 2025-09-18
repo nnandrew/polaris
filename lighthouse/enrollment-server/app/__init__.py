@@ -36,7 +36,7 @@ def create_app():
     # Configure Flask App
     app = flask.Flask(__name__)
     dotenv.load_dotenv()
-    app.config["NETWORK_KEY"] = os.getenv("NETWORK_KEY")
+    app.config["LIGHTHOUSE_NETWORK_KEY"] = os.getenv("LIGHTHOUSE_NETWORK_KEY")
     app.config["LIGHTHOUSE_PUBLIC_IP"] = os.getenv("LIGHTHOUSE_PUBLIC_IP")
     app.register_blueprint(main_bp)
 
@@ -75,7 +75,7 @@ def create_app():
         ''')
         conn.commit()
         conn.close()
-        config_path = nebula.generate_nebula_config(group_name="lighthouse", LIGHTHOUSE_PUBLIC_IP=app.config.get('LIGHTHOUSE_PUBLIC_IP'))
+        config_path = nebula.generate_nebula_config(group_name="lighthouse", public_ip=app.config.get('LIGHTHOUSE_PUBLIC_IP'))
         print(f"Lighthouse Configuration Generated at {config_path}.")   
 
     return app

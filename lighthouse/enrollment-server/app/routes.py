@@ -22,7 +22,7 @@ def enroll():
     """
     Handles a new node enrollment request.
 
-    Authenticates the request using a 'network_key' query parameter. If valid,
+    Authenticates the request using a 'LIGHTHOUSE_NETWORK_KEY' query parameter. If valid,
     it generates a new Nebula configuration for the specified 'group_name',
     sends the configuration file as an attachment, and then deletes the file
     from the server.
@@ -35,8 +35,8 @@ def enroll():
         A Flask response object containing the config file or an error message.
     """
     # Authenticate Request
-    network_key = flask.request.args.get('network_key')
-    if not network_key or network_key != flask.current_app.config.get("NETWORK_KEY"):
+    network_key = flask.request.args.get('LIGHTHOUSE_NETWORK_KEY')
+    if not network_key or network_key != flask.current_app.config.get("LIGHTHOUSE_NETWORK_KEY"):
         return "Unauthorized", 401
         
     # Generate Host Configuration
@@ -85,7 +85,7 @@ def hosts():
     conn.close()
     return flask.render_template('hosts.html', hosts=hosts)
 
-@main_bp.route('/api/hosts', methods=['GET'])
+@main_bp.route('/api/translate', methods=['GET'])
 def translate():
     """
     Return VPN IP of requesting host.

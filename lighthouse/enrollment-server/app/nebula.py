@@ -17,7 +17,7 @@ yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True 
 yaml.default_flow_style = True
 
-def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
+def generate_nebula_config(group_name, public_ip):
     """
     Generates a complete Nebula configuration file for a new node.
 
@@ -35,7 +35,7 @@ def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
 
     Args:
         group_name (str): The name of the Nebula security group for the new node.
-        LIGHTHOUSE_PUBLIC_IP (str): The public IP address of the lighthouse node.
+        public_ip (str): The public IP address of the lighthouse node.
 
     Returns:
         str: The file path to the newly generated configuration file.
@@ -87,7 +87,7 @@ def generate_nebula_config(group_name, LIGHTHOUSE_PUBLIC_IP):
     os.remove(f"./{host_id}.key")
         
     # Lighthouse Configuration
-    config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{LIGHTHOUSE_PUBLIC_IP}:4242")]
+    config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{public_ip}:4242")]
     if group_name == "lighthouse":
         config["lighthouse"]["am_lighthouse"] = True
         config["lighthouse"]["hosts"] = ""

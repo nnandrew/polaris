@@ -54,12 +54,12 @@ First, set up the central server.
     ```
 
 2.  **Create the environment file:**
-    Create a file named `.env` inside the `lighthouse/enrollment-server/` directory with the following content. Choose a strong, unique key for `NETWORK_KEY`.
+    Create a file named `.env` inside the `lighthouse/` directory with the following content. Choose a strong, unique key for `LIGHTHOUSE_NETWORK_KEY`.
     ```
-    LIGHTHOUSE_PUBLIC_IP="<Your Server's Public IP>"
-    NETWORK_KEY="<Your-Secret-Network-Key>"
+    LIGHTHOUSE_PUBLIC_IP="<Your-Server-Public-IP>"
+    LIGHTHOUSE_NETWORK_KEY="<Your-Secret-Network-Key>"
     ```
-    You can optionally create a `.env` file in `lighthouse/` for the Grafana Dashboard with secrets possibly from [here](https://cloud2.influxdata.com/):
+    You can also optionally add the following for Grafana Dashboard functionality with secrets possibly from [here](https://cloud2.influxdata.com/):
     ```
     INFLUXDB_URL="<Your-InfluxDB-Server>"
     INFLUXDB_TOKEN="<Your-InfluxDB-Token>"
@@ -71,7 +71,7 @@ First, set up the central server.
     ```bash
     docker-compose up --build -d
     ```
-    On the first run, the server will download the `nebula-cert` tool and generate a Certificate Authority (`ca.key`, `ca.crt`), a host record database (`record.db`), and a configuration file (`config.yml`) inside the `lighthouse/enrollment-server/shared/` directory.
+    On the first run, the server will download the `nebula-cert` tool and generate a Certificate Authority (`ca.key`, `ca.crt`), a host record database (`record.db`), and a configuration file (`config.yml`) inside the `lighthouse/shared/` directory.
 
 ### 2. Base Station Setup
 Next, set up the stationary Base Station.
@@ -82,11 +82,10 @@ Next, set up the stationary Base Station.
     cd polaris/base-station
     ```
 2.  **Create the environment file:**
-    Create a file named `.env` inside the `base-station/enrollment-client/` directory. Use the **same IP and network key** as the Lighthouse.
+    Create a file named `.env` inside the `base-station/` directory. Use the **same IP and network key** as the Lighthouse.
     ```
     LIGHTHOUSE_PUBLIC_IP="<Your Server's Public IP>"
-    NETWORK_KEY="<Your-Secret-Network-Key>"
-    GROUP_NAME="base_station"
+    LIGHTHOUSE_NETWORK_KEY="<Your-Secret-Network-Key>"
     ```
 3.  **Connect the GPS:**
     Connect your GNSS module to the Base Station device via USB.
@@ -95,7 +94,7 @@ Next, set up the stationary Base Station.
     ```bash
     docker-compose up --build -d
     ```
-    The enrollment client will contact the Lighthouse, receive its unique configuration, and place it in the `base-station/nebula/shared/` directory. The Nebula service will then use this to connect to the network.
+    The enrollment client will contact the Lighthouse, receive its unique configuration, and place it in the `base-station/shared/` directory. The Nebula service will then use this to connect to the network.
 
 ### 3. Rover Setup
 Finally, set up the mobile Rover.
@@ -106,13 +105,12 @@ Finally, set up the mobile Rover.
     cd polaris/rover
     ```
 2.  **Create the environment file:**
-    Create a file named `.env` inside the `lighthouse/enrollment-client/` directory.
+    Create a file named `.env` inside the `rover/` directory.
     ```
     LIGHTHOUSE_PUBLIC_IP="<Your Server's Public IP>"
-    NETWORK_KEY="<Your-Secret-Network-Key>"
-    GROUP_NAME="rover"
+    LIGHTHOUSE_NETWORK_KEY="<Your-Secret-Network-Key>"
     ```
-    You will also need to create a `.env` file in `rover/ntrip-client/` for the InfluxDB logger with secrets possibly from [here](https://cloud2.influxdata.com/):
+    You can also optionally add the following for Grafana Dashboard functionality with secrets possibly from [here](https://cloud2.influxdata.com/):
     ```
     INFLUXDB_URL="<Your-InfluxDB-Server>"
     INFLUXDB_TOKEN="<Your-InfluxDB-Token>"
@@ -138,7 +136,7 @@ Once all three components are running, the system will operate automatically:
 You can monitor the system by:
 -   **Viewing the logs** of the Docker containers on each machine: `docker-compose logs -f <service_name>`
 -   **Checking the enrolled hosts** by visiting `http://<Your Server's Public IP>/api/hosts` in a browser.
--   **Visualizing the data** in Grafana by creating dashboards that query your InfluxDB database.
+-   **Visualizing the data** in the Grafana Dashbaord at `http://<Your Server's Public IP>:3000` in the browser.
 
 ## Useful Links
 - **InfluxDB Cloud**: [https://www.influxdata.com/products/influxdb-cloud/](https://www.influxdata.com/products/influxdb-cloud/)

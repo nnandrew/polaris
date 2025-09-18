@@ -1,26 +1,26 @@
 services:
   ntrip-caster:
     build: ./ntrip-caster
-    # image: polaris/ntrip-caster:latest
+    # image: polaris/ntrip-caster:latest  # FOR FINAL DELIVERABLE
     container_name: ntrip-caster
     volumes:
-      - ../base-station/shared:/home/ntrip-caster
+      - ./shared:/home/ntrip-caster
       - ../common:/common
     devices:
-      - "/dev/ttyACM0:/dev/ttyACM0"  # GNSS Receiver
+      - "/dev/ttyACM0:/dev/ttyACM0"  # GNSS Receiver, may need to change based on your device
     ports:
       - "2101:2101" # NTRIP
     restart: unless-stopped
   enrollment-client:
     build: ../common/enrollment-client
-    # image: polaris/enrollment-client:latest
+    # image: polaris/enrollment-client:latest  # FOR FINAL DELIVERABLE
     container_name: enrollment-client
     environment: 
-      - GROUP_NAME=base_station
-    env_file:
-      - ../.env
+      - LIGHTHOUSE_GROUP_NAME=base_station
+      - LIGHTHOUSE_PUBLIC_IP=${LIGHTHOUSE_PUBLIC_IP}
+      - LIGHTHOUSE_NETWORK_KEY=${LIGHTHOUSE_NETWORK_KEY}
     volumes:
-      - ../base-station/shared:/home/enrollment-client/shared
+      - ./shared:/home/enrollment-client/shared
     ports:
       - "80:80"   # HTTP
       - "443:443" # HTTPS
@@ -32,7 +32,7 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - ../base-station/shared:/config
+      - ./shared:/config
     depends_on:
       - enrollment-client
     restart: unless-stopped

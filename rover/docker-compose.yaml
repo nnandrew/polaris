@@ -15,11 +15,11 @@ services:
     # image: polaris/enrollment-client:latest
     container_name: enrollment-client
     environment: 
-      - GROUP_NAME=rover
-    env_file:
-      - ../.env
+      - LIGHTHOUSE_GROUP_NAME=rover
+      - LIGHTHOUSE_PUBLIC_IP=${LIGHTHOUSE_PUBLIC_IP}
+      - LIGHTHOUSE_NETWORK_KEY=${LIGHTHOUSE_NETWORK_KEY}
     volumes:
-      - ../rover/shared:/home/enrollment-client/shared
+      - ./shared:/home/enrollment-client/shared
     ports:
       - "80:80"   # HTTP
       - "443:443" # HTTPS
@@ -31,7 +31,7 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - ../rover/shared:/config
+      - ./shared:/config
     depends_on:
       - enrollment-client
     restart: unless-stopped

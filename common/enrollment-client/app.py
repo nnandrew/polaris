@@ -7,9 +7,9 @@ periodically checking if the configuration file exists. If not, it sends a GET
 request to the enrollment server's API.
 
 The client requires the following environment variables to be set:
-- `NETWORK_KEY`: A secret key to authenticate with the enrollment server.
+- `LIGHTHOUSE_NETWORK_KEY`: A secret key to authenticate with the enrollment server.
 - `LIGHTHOUSE_PUBLIC_IP`: The public IP address of the Lighthouse server.
-- `GROUP_NAME`: The Nebula security group this client should belong to.
+- `LIGHTHOUSE_GROUP_NAME`: The Nebula security group this client should belong to.
 
 The script will place the received `config.yml` in the `./shared/` directory.
 """
@@ -33,16 +33,16 @@ if __name__ == '__main__':
     
     # Load Environment Variables
     dotenv.load_dotenv()
-    NETWORK_KEY = os.getenv("NETWORK_KEY")
+    LIGHTHOUSE_NETWORK_KEY = os.getenv("LIGHTHOUSE_NETWORK_KEY")
     LIGHTHOUSE_PUBLIC_IP = os.getenv("LIGHTHOUSE_PUBLIC_IP")
-    GROUP_NAME = os.getenv("GROUP_NAME")
+    LIGHTHOUSE_GROUP_NAME = os.getenv("LIGHTHOUSE_GROUP_NAME")
     logging.info("Environment Variables Loaded.")
     
     # Attempt Enrollment
     url = f"http://{LIGHTHOUSE_PUBLIC_IP}/api/enroll"
     params = {
-        "network_key": NETWORK_KEY,
-        "group_name": GROUP_NAME
+        "network_key": LIGHTHOUSE_NETWORK_KEY,
+        "group_name": LIGHTHOUSE_GROUP_NAME
     }
     config_path = "./shared/config.yml"
     

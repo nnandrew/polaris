@@ -6,7 +6,7 @@ services:
     volumes:
       - ./shared:/home/enrollment-server/shared
     ports:
-      - "80:80" # HTTP
+      - "80:80"   # HTTP
       - "443:443" # HTTPS
     restart: unless-stopped
   nebula:
