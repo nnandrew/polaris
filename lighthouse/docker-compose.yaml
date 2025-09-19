@@ -5,9 +5,6 @@ services:
     container_name: enrollment-server
     volumes:
       - ./shared:/home/enrollment-server/shared
-    ports:
-      - "80:80"   # HTTP
-      - "443:443" # HTTPS
     restart: unless-stopped
   nebula:
     image: nebulaoss/nebula:latest
@@ -29,10 +26,28 @@ services:
       - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
     volumes:
-      - ./grafana-config/grafana.ini:/etc/grafana/grafana.ini
-      - ./grafana-config/dashboards:/var/lib/grafana/dashboards
-      - ./grafana-config/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana-config/dashboard_provisioning.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
-    ports:
-      - "3000:3000"
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboard_provisioning.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
     restart: unless-stopped
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    command: 'nginx -g "daemon off;"'
+    depends_on:
+      - enrollment-server
+      - grafana
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
