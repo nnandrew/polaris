@@ -59,13 +59,13 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     gnc = GNSSNTRIPClient()
     gnc.run(
         # Public RTK (7km away, unreliable)
-        # server="rtk2go.com",
-        # mountpoint="AUS_LOFT_GNSS",
-        # ntripuser="andrewvnguyen@utexas.edu",
-        # Private RTK
-        server="192.168.100.11", # Private RTK, TODO: get with /api/ntrip
-        mountpoint="pygnssutils",
-        ntripuser="test",
+        server="rtk2go.com",
+        mountpoint="AUS_LOFT_GNSS",
+        ntripuser="andrewvnguyen@utexas.edu",
+        #Private RTK
+        # server="192.168.100.11", # Private RTK, TODO: get with /api/ntrip
+        # mountpoint="pygnssutils",
+        # ntripuser="test",
         ntrippassword="none",
         port=2101,
         https=0,
@@ -82,7 +82,7 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     while not stop_event.is_set():
         sleep(10)
         
-def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
+def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type):
     """
     Reads RTCM3 data from a queue and sends it to the GPS device.
 
@@ -96,6 +96,11 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
         stop_event (Event): A threading event to signal when to stop.
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
+    dotenv.load_dotenv()
+    token = os.getenv("INFLUXDB_TOKEN")
+    org = "GPSSensorData"
+    host = "https://us-east-1-1.aws.cloud2.influxdata.com"
+    client = InfluxDBClient3(host=host, token=token, org=org)
     while not stop_event.is_set():
         if not gnss_rtcm_queue.empty():
             try:
@@ -103,13 +108,16 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event):
                 if protocol(raw_data) == RTCM3_PROTOCOL:
                     gps.ser.write(raw_data)
                     print(f"{'rtcm_process_thread':<20}: Sent to GPS!")
+                    points = Point("metrics").tag("device", gps_type)
+                    points.field("ntrip_client_rtcm_recieved", True)
+                    client.write(database="GPS", record=points, write_precision="s")                
                 else:
                     print(f"{'rtcm_process_thread':<20}: Discarding non-RTCM3 data.")
             except Exception as err:
                 print(f"{'rtcm_process_thread':<20}: {err}")
             gnss_rtcm_queue.task_done()
         sleep(1) # Prevent busy-waiting
-        
+
                 
 def influx_write_thread(gps_type, gps, stop_event):
     """
@@ -215,7 +223,7 @@ def app():
             thread_pool.append(
                 Thread(
                     target=rtcm_process_thread,
-                    args=(gnss_rtcm_queue, gps, stop_event),
+                    args=(gnss_rtcm_queue, gps, stop_event, GPS_TYPE),
                     daemon=True
                 )
             )
