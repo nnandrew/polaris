@@ -21,7 +21,7 @@
         {% if not session.logged_in %}
             <div class="login-form">
                 <h1>Nebula Admin Login</h1>
-                <form action="/admin/login" method="post">
+                <form action="/nebula/login" method="post">
                     <input type="password" name="password" placeholder="Password" required>
                     <button type="submit">Login</button>
                 </form>
@@ -31,7 +31,7 @@
             </div>
         {% else %}
             <h1>Nebula Admin Panel</h1>
-            <a href="/admin/logout">Logout</a>
+            <a href="/nebula/logout">Logout</a>
 
             <table>
                 <thead>
@@ -64,7 +64,7 @@
                             <td>{{ host[1] }}</td>
                             <td>{{ host[3] }} ms</td>
                             <td>
-                                <form action="/admin/rename" method="post" style="display:inline;">
+                                <form action="/nebula/rename" method="post" style="display:inline;">
                                     <input type="hidden" name="user_id" value="{{ host[0] }}">
                                     <input type="text" name="new_group_name" value="{{ host[2] }}" required>
                                     <button type="submit">Rename</button>

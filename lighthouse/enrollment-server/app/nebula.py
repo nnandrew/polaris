@@ -1,10 +1,9 @@
 """
 Nebula Configuration Generation Module.
 
-This module provides the functionality to dynamically generate Nebula configuration
-files for new nodes wishing to join the mesh network. It interacts with the
-`nebula-cert` utility to create certificates and keys, and it persists host
-information in a SQLite database.
+This module provides functionality to dynamically generate Nebula configuration
+files for nodes joining the mesh network. It uses the `nebula-cert` utility to
+create certificates and keys, and persists host information in a SQLite database.
 """
 import os
 import subprocess
@@ -21,31 +20,30 @@ yaml.default_flow_style = True
 
 def generate_nebula_config(group_name, public_ip, ip_octet=None):
     """
-    Generates a complete Nebula configuration file for a new node.
+    Generates a Nebula configuration file for a new node.
 
-    This function performs the following steps:
-    1.  Loads a base configuration from `config-template.yaml`.
-    2.  Assigns a new VPN IP address from the 192.168.100.0/24 subnet.
-    3.  Records the new host's IP and group name in the `record.db` database.
-    4.  Calls `nebula-cert` to sign a new certificate for the host.
-    5.  Reads the CA certificate, host certificate, and host key from files.
-    6.  Embeds the certificate and key content directly into the configuration.
-    7.  Deletes the temporary host certificate and key files.
-    8.  Sets the static host map to point to the lighthouse's public IP.
-    9.  Adjusts settings based on whether the node is a lighthouse or a regular host.
-    10. Writes the final configuration to a unique YAML file.
+    Steps:
+    1.  Loads base config from `config-template.yaml`.
+    2.  Assigns a VPN IP from 192.168.100.0/24.
+    3.  Records host info in `record.db`.
+    4.  Calls `nebula-cert` to sign a certificate.
+    5.  Reads CA cert, host cert, and key from files.
+    6.  Embeds cert/key content into config.
+    7.  Deletes temporary cert/key files.
+    8.  Sets static host map to lighthouse's public IP.
+    9.  Adjusts settings for lighthouse or regular host.
+    10. Writes config to a unique YAML file.
 
     Args:
-        group_name (str): The name of the Nebula security group for the new node.
-        public_ip (str): The public IP address of the lighthouse node.
-        ip_octet (int): The desired IP octet (2-254) for the new node.
+        group_name (str): Nebula group name for the node.
+        public_ip (str): Lighthouse node's public IP.
+        ip_octet (int): Desired IP octet (2-254) for the node.
 
     Returns:
-        str: The file path to the newly generated configuration file.
+        str: Path to the generated config file.
     
     Raises:
-        Exception: If the network runs out of available IP addresses (max 254).
-        Exception: If the specified IP address is already in use or invalid.
+        Exception: If network is full or IP is invalid/in use.
     """
     # Load Configuration Template
     with open("../config-template.yaml", "r") as config_file:
@@ -122,7 +120,7 @@ def get_base_station():
     Retrieves the VPN IP address of the base station from the database.
 
     Returns:
-        tuple: A tuple containing the VPN IP address of the base station, or None if not found.
+        tuple: (vpn_ip,) of the base station, or None if not found.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
@@ -132,6 +130,15 @@ def get_base_station():
     return result
 
 def ping_host(vpn_ip):
+    """
+    Pings a VPN IP address once and returns the ping time in ms.
+
+    Args:
+        vpn_ip (str): The VPN IP to ping.
+
+    Returns:
+        float: Ping time in ms, or -1 if unreachable.
+    """
     try:
         result = subprocess.run(
             ["ping", "-c", "1", "-W", "1", vpn_ip],
@@ -144,24 +151,20 @@ def ping_host(vpn_ip):
         if is_alive:
             # Parse ping output for time=XX ms
             for line in result.stdout.splitlines():
-                print(line)
                 if "time=" in line:
-                    try:
-                        ping_ms = float(line.split("time=")[-1].split()[0])
-                    except Exception:
-                        ping_ms = None
+                    ping_ms = float(line.split("time=")[-1].split()[0])
                     break
-        return is_alive, ping_ms
+        return ping_ms
     except Exception:
-        return False, None
+        return -1
 
 def get_hosts():
     """
-    Retrieves all hosts from the database and pings each host to get its status and ping time.
+    Retrieves all hosts from the database and pings each host.
 
     Returns:
-        list of tuples: Each tuple contains (id, vpn_ip, group_name, ping_ms) of a host.
-        If the host is unreachable, ping_ms will be -1.
+        list of tuples: (id, vpn_ip, group_name, ping_ms) for each host.
+        ping_ms is -1 if unreachable.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
@@ -173,20 +176,17 @@ def get_hosts():
     with concurrent.futures.ThreadPoolExecutor() as executor:
         vpn_ips = [row[1] for row in results]
         ping_results = list(executor.map(ping_host, vpn_ips))
-        for row, (is_alive, ping_ms) in zip(results, ping_results):
-            if not is_alive or ping_ms is None:
-                ping_ms = -1
+        for row, ping_ms in zip(results, ping_results):
             hosts_with_status.append(row + (ping_ms,))
 
-    results = hosts_with_status
-    return results
+    return hosts_with_status
 
 def remove_user(user_id):
     """
     Removes a user from the database.
 
     Args:
-        user_id (int): The ID of the user to remove.
+        user_id (int): The user's ID.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
@@ -199,7 +199,7 @@ def rename_group(user_id, new_group_name):
     Renames the group for a given user.
 
     Args:
-        user_id (int): The ID of the user.
+        user_id (int): The user's ID.
         new_group_name (str): The new group name.
     """
     conn = sqlite3.connect('./record.db')

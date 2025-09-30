@@ -1,20 +1,20 @@
 """
 Defines the API routes for the Nebula Enrollment Server.
 
-This module contains the Flask Blueprint for the main API endpoints, including
-enrollment and administration.
+This module contains the Flask Blueprint for the main API endpoints,
+including enrollment and administration functionality.
 """
 import flask
 import os
 from app import nebula
 import sqlite3
 
-# The Nebula network is on the 192.168.100.X/24 subnet:
+# Nebula network is on the 192.168.100.X/24 subnet:
 # X=0: Network identifier
 # X=1: Lighthouse address
 # X=2-254: Host addresses
 # X=255: Broadcast address
-    
+
 main_bp = flask.Blueprint('main', __name__)
 
 @main_bp.route('/api/enroll', methods=['GET', 'POST'])
@@ -26,7 +26,7 @@ def enroll():
     POST: Requires admin session and 'group_name' as form data.
 
     Returns:
-        A Flask response object containing the config file or an error message.
+        Flask response containing the config file or an error message.
     """
     if flask.request.method == 'GET':
         # API enrollment
@@ -37,7 +37,6 @@ def enroll():
         if not group_name:
             return "Missing group_name", 400
         ip_octet = None
-        
     else:
         # Manual enrollment via admin panel
         if not flask.session.get('logged_in'):
@@ -56,6 +55,8 @@ def enroll():
     try:
         config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
         response = flask.send_file(config_path, as_attachment=True)
+        # Refresh the page after sending the file
+        response.headers["Refresh"] = "0; url=" + flask.url_for('main.admin')
         response.call_on_close(lambda: os.remove(config_path))
         return response
     except Exception as e:
@@ -81,20 +82,29 @@ def ntrip():
 @main_bp.route('/api/translate', methods=['GET'])
 def translate():
     """
-    Return VPN IP of requesting host.
+    Returns the VPN IP of the requesting host.
+
+    Note: This currently returns the remote address as seen by Flask,
+    which may not be the Nebula VPN IP.
     """
-    # TODO: This probably needs to be translated to the Nebula IP
+    # TODO: Translate to Nebula VPN IP if necessary
     return flask.request.remote_addr
 
-@main_bp.route('/admin/', methods=['GET'])
+@main_bp.route('/nebula/', methods=['GET'])
 def admin():
+    """
+    Renders the admin panel. Requires login for host management.
+    """
     if not flask.session.get('logged_in'):
         return flask.render_template('admin.html')
     hosts = nebula.get_hosts()
     return flask.render_template('admin.html', hosts=hosts)
 
-@main_bp.route('/admin/login', methods=['POST'])
+@main_bp.route('/nebula/login', methods=['POST'])
 def login():
+    """
+    Handles admin login. Sets session if password matches network key.
+    """
     password = flask.request.form.get('password')
     if password == flask.current_app.config.get("LIGHTHOUSE_NETWORK_KEY"):
         flask.session['logged_in'] = True
@@ -102,13 +112,19 @@ def login():
         return flask.render_template('admin.html', error='Invalid password')
     return flask.redirect(flask.url_for('main.admin'))
 
-@main_bp.route('/admin/logout')
+@main_bp.route('/nebula/logout')
 def logout():
+    """
+    Logs out the admin user and redirects to admin panel.
+    """
     flask.session.pop('logged_in', None)
     return flask.redirect(flask.url_for('main.admin'))
 
 @main_bp.route('/api/remove', methods=['POST'])
 def remove_user():
+    """
+    Removes a user from the Nebula network. Requires admin session.
+    """
     if not flask.session.get('logged_in'):
         return flask.redirect(flask.url_for('main.admin'))
     user_id = flask.request.form.get('user_id')
@@ -118,6 +134,9 @@ def remove_user():
 
 @main_bp.route('/api/rename', methods=['POST'])
 def rename_group():
+    """
+    Renames a user's group in the Nebula network. Requires admin session.
+    """
     if not flask.session.get('logged_in'):
         return flask.redirect(flask.url_for('main.admin'))
     user_id = flask.request.form.get('user_id')
