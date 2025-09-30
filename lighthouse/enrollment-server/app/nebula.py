@@ -12,6 +12,8 @@ import sqlite3
 import ruamel.yaml
 from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarString
 from flask import current_app
+import subprocess
+import concurrent.futures
 
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True 
@@ -129,18 +131,53 @@ def get_base_station():
     conn.close()
     return result
 
+def ping_host(vpn_ip):
+    try:
+        result = subprocess.run(
+            ["ping", "-c", "1", "-W", "1", vpn_ip],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+        is_alive = result.returncode == 0
+        ping_ms = None
+        if is_alive:
+            # Parse ping output for time=XX ms
+            for line in result.stdout.splitlines():
+                if "time=" in line:
+                    try:
+                        ping_ms = float(line.split("time=")[-1].split()[0])
+                    except Exception:
+                        ping_ms = None
+                    break
+        return is_alive, ping_ms
+    except Exception:
+        return False, None
+
 def get_hosts():
     """
-    Retrieves all hosts from the database.
+    Retrieves all hosts from the database and pings each host to get its status and ping time.
 
     Returns:
-        list of tuples: Each tuple contains (id, vpn_ip, group_name) of a host.
+        list of tuples: Each tuple contains (id, vpn_ip, group_name, ping_ms) of a host.
+        If the host is unreachable, ping_ms will be -1.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
     cursor.execute("SELECT id, vpn_ip, group_name FROM hosts")
     results = cursor.fetchall()
     conn.close()
+
+    hosts_with_status = []
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        vpn_ips = [row[1] for row in results]
+        ping_results = list(executor.map(ping_host, vpn_ips))
+        for row, (is_alive, ping_ms) in zip(results, ping_results):
+            if not is_alive or ping_ms is None:
+                ping_ms = -1
+            hosts_with_status.append(row + (ping_ms,))
+
+    results = hosts_with_status
     return results
 
 def remove_user(user_id):
