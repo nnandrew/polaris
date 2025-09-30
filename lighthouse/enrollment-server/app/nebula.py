@@ -142,3 +142,17 @@ def remove_user(user_id):
     cursor.execute("DELETE FROM hosts WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
+
+def rename_group(user_id, new_group_name):
+    """
+    Renames the group for a given user.
+
+    Args:
+        user_id (int): The ID of the user.
+        new_group_name (str): The new group name.
+    """
+    conn = sqlite3.connect('./record.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE hosts SET group_name = ? WHERE id = ?", (new_group_name, user_id))
+    conn.commit()
+    conn.close()

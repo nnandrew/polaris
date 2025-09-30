@@ -111,6 +111,16 @@ def remove_user():
         nebula.remove_user(user_id)
     return flask.redirect(flask.url_for('main.admin'))
 
+@main_bp.route('/admin/rename_group', methods=['POST'])
+def rename_group():
+    if not flask.session.get('logged_in'):
+        return flask.redirect(flask.url_for('main.admin'))
+    user_id = flask.request.form.get('user_id')
+    new_group_name = flask.request.form.get('new_group_name')
+    if user_id and new_group_name:
+        nebula.rename_group(user_id, new_group_name)
+    return flask.redirect(flask.url_for('main.admin'))
+
 @main_bp.route('/admin/manual_enroll', methods=['POST'])
 def manual_enroll():
     if not flask.session.get('logged_in'):
