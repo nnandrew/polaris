@@ -64,7 +64,7 @@
                             <td>{{ host[1] }}</td>
                             <td>{{ host[3] }} ms</td>
                             <td>
-                                <form action="/nebula/rename" method="post" style="display:inline;">
+                                <form action="/api/rename" method="post" style="display:inline;">
                                     <input type="hidden" name="user_id" value="{{ host[0] }}">
                                     <input type="text" name="new_group_name" value="{{ host[2] }}" required>
                                     <button type="submit">Rename</button>

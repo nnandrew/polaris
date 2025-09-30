@@ -55,9 +55,10 @@ def enroll():
     try:
         config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
         response = flask.send_file(config_path, as_attachment=True)
-        # Refresh the page after sending the file
-        response.headers["Refresh"] = "0; url=" + flask.url_for('main.admin')
         response.call_on_close(lambda: os.remove(config_path))
+        # For admin panel POST, redirect to admin page after sending file.
+        if flask.request.method == 'POST':
+            response.headers["Refresh"] = "0; url=" + flask.url_for('main.admin')
         return response
     except Exception as e:
         flask.current_app.logger.error(f"Manual enrollment failed: {str(e)}")
