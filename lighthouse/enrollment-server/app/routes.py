@@ -2,7 +2,7 @@
 Defines the API routes for the Nebula Enrollment Server.
 
 This module contains the Flask Blueprint for the main API endpoints, including
-enrollment, host information, and NTRIP server discovery.
+enrollment and administration.
 """
 import flask
 import os
@@ -67,24 +67,6 @@ def ntrip():
         return result[0]
     return "Base station not found", 404
 
-@main_bp.route('/api/hosts', methods=['GET'])
-def hosts():
-    """
-    Displays a list of all enrolled hosts.
-
-    Fetches all host records from the database and renders them in an
-    HTML template for debugging purposes.
-
-    Returns:
-        A rendered HTML page displaying the list of hosts.
-    """
-    conn = sqlite3.connect('./record.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, vpn_ip, group_name FROM hosts;")
-    hosts = cursor.fetchall()
-    conn.close()
-    return flask.render_template('hosts.html', hosts=hosts)
-
 @main_bp.route('/api/translate', methods=['GET'])
 def translate():
     """
@@ -93,3 +75,59 @@ def translate():
     # TODO: This probably needs to be translated to the Nebula IP
     return flask.request.remote_addr
 
+@main_bp.route('/admin', methods=['GET'])
+def admin():
+    if not flask.session.get('logged_in'):
+        return flask.render_template('admin.html')
+    else:
+        conn = sqlite3.connect('./record.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, vpn_ip, group_name FROM hosts;")
+        hosts = cursor.fetchall()
+        conn.close()
+        return flask.render_template('admin.html', hosts=hosts)
+
+@main_bp.route('/admin/login', methods=['POST'])
+def login():
+    password = flask.request.form.get('password')
+    if password == flask.current_app.config.get("LIGHTHOUSE_NETWORK_KEY"):
+        flask.session['logged_in'] = True
+    else:
+        return flask.render_template('admin.html', error='Invalid password')
+    return flask.redirect(flask.url_for('main.admin'))
+
+@main_bp.route('/admin/logout')
+def logout():
+    flask.session.pop('logged_in', None)
+    return flask.redirect(flask.url_for('main.admin'))
+
+@main_bp.route('/admin/add_user', methods=['POST'])
+def add_user():
+    if not flask.session.get('logged_in'):
+        return flask.redirect(flask.url_for('main.admin'))
+    group_name = flask.request.form.get('group_name')
+    if group_name:
+        nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'))
+    return flask.redirect(flask.url_for('main.admin'))
+
+
+@main_bp.route('/admin/remove_user', methods=['POST'])
+def remove_user():
+    if not flask.session.get('logged_in'):
+        return flask.redirect(flask.url_for('main.admin'))
+    user_id = flask.request.form.get('user_id')
+    if user_id:
+        nebula.remove_user(user_id)
+    return flask.redirect(flask.url_for('main.admin'))
+
+@main_bp.route('/admin/manual_enroll', methods=['POST'])
+def manual_enroll():
+    if not flask.session.get('logged_in'):
+        return flask.redirect(flask.url_for('main.admin'))
+    group_name = flask.request.form.get('group_name')
+    if group_name:
+        config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'))
+        response = flask.send_file(config_path, as_attachment=True)
+        response.call_on_close(lambda: os.remove(config_path))
+        return response
+    return flask.redirect(flask.url_for('main.admin'))
