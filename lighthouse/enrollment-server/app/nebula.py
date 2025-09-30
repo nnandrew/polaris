@@ -59,16 +59,16 @@ def generate_nebula_config(group_name, public_ip):
         for candidate_id in range(2, 255):
             if candidate_id not in used_ids:
                 host_id = candidate_id
-            break
+                break
         else:
             raise Exception("Network full.")
     
     vpn_ip = f"192.168.100.{host_id}"
     cursor.execute('''
-        INSERT INTO hosts (vpn_ip, group_name)
-        VALUES (?, ?)
+        INSERT INTO hosts (id, vpn_ip, group_name)
+        VALUES (?, ?, ?)
         ''', 
-        (vpn_ip, group_name)
+        (host_id, vpn_ip, group_name)
     )
     conn.commit()
     conn.close()
