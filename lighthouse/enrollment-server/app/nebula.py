@@ -53,10 +53,14 @@ def generate_nebula_config(group_name, public_ip):
     if group_name == "lighthouse":
         host_id = 1
     else:
-        cursor.execute("SELECT MAX(id) FROM hosts")
-        result = cursor.fetchone()
-        host_id = (int(result[0]) if result and result[0] is not None else 1) + 1
-        if host_id > 254:
+        cursor.execute("SELECT id FROM hosts ORDER BY id")
+        used_ids = {row[0] for row in cursor.fetchall()}
+        # Find the smallest unused id in 1..254
+        for candidate_id in range(2, 255):
+            if candidate_id not in used_ids:
+                host_id = candidate_id
+            break
+        else:
             raise Exception("Network full.")
     
     vpn_ip = f"192.168.100.{host_id}"
