@@ -54,7 +54,7 @@ def enroll():
             return flask.render_template('admin.html', hosts=hosts, error="Invalid IP octet. Must be between 2 and 254.")
 
     try:
-        config_path = nebula.generate_nebula_config_with_ip(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
+        config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
         response = flask.send_file(config_path, as_attachment=True)
         response.call_on_close(lambda: os.remove(config_path))
         return response

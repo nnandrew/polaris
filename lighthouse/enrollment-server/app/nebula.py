@@ -144,6 +144,7 @@ def ping_host(vpn_ip):
         if is_alive:
             # Parse ping output for time=XX ms
             for line in result.stdout.splitlines():
+                print(line)
                 if "time=" in line:
                     try:
                         ping_ms = float(line.split("time=")[-1].split()[0])
