@@ -75,7 +75,7 @@ def translate():
     # TODO: This probably needs to be translated to the Nebula IP
     return flask.request.remote_addr
 
-@main_bp.route('/admin', methods=['GET'])
+@main_bp.route('/admin/', methods=['GET'])
 def admin():
     if not flask.session.get('logged_in'):
         return flask.render_template('admin.html')
