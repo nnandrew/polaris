@@ -3,6 +3,9 @@ services:
     build: ./enrollment-server
     # image: polaris/enrollment-server:latest  # FOR FINAL DELIVERABLE
     container_name: enrollment-server
+    environment:
+      - LIGHTHOUSE_PUBLIC_IP=${LIGHTHOUSE_PUBLIC_IP}  
+      - LIGHTHOUSE_NETWORK_KEY=${LIGHTHOUSE_NETWORK_KEY}
     volumes:
       - ./shared:/home/enrollment-server/shared
     restart: unless-stopped
@@ -25,8 +28,6 @@ services:
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
       - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-      - LIGHTHOUSE_PUBLIC_IP=${LIGHTHOUSE_PUBLIC_IP}  
-      - LIGHTHOUSE_NETWORK_KEY=${LIGHTHOUSE_NETWORK_KEY}
     volumes:
       - ./grafana/grafana.ini:/etc/grafana/grafana.ini
       - ./grafana/dashboards:/var/lib/grafana/dashboards

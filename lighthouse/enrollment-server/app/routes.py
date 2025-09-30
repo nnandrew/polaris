@@ -58,11 +58,7 @@ def ntrip():
     Returns:
         str: The VPN IP address of the base station, or an error if not found.
     """
-    conn = sqlite3.connect('./record.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT vpn_ip FROM hosts WHERE group_name = 'base_station'")
-    result = cursor.fetchone()
-    conn.close()
+    result = nebula.get_base_station()
     if result:
         return result[0]
     return "Base station not found", 404
@@ -79,13 +75,8 @@ def translate():
 def admin():
     if not flask.session.get('logged_in'):
         return flask.render_template('admin.html')
-    else:
-        conn = sqlite3.connect('./record.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, vpn_ip, group_name FROM hosts;")
-        hosts = cursor.fetchall()
-        conn.close()
-        return flask.render_template('admin.html', hosts=hosts)
+    hosts = nebula.get_hosts()
+    return flask.render_template('admin.html', hosts=hosts)
 
 @main_bp.route('/admin/login', methods=['POST'])
 def login():

@@ -101,3 +101,44 @@ def generate_nebula_config(group_name, public_ip):
     current_app.logger.info(f"Certificate on {vpn_ip} generated for {group_name}.")
 
     return config_path
+
+def get_base_station():
+    """
+    Retrieves the VPN IP address of the base station from the database.
+
+    Returns:
+        tuple: A tuple containing the VPN IP address of the base station, or None if not found.
+    """
+    conn = sqlite3.connect('./record.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT vpn_ip FROM hosts WHERE group_name = 'base_station'")
+    result = cursor.fetchone()
+    conn.close()
+    return result
+
+def get_hosts():
+    """
+    Retrieves all hosts from the database.
+
+    Returns:
+        list of tuples: Each tuple contains (id, vpn_ip, group_name) of a host.
+    """
+    conn = sqlite3.connect('./record.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, vpn_ip, group_name FROM hosts")
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
+def remove_user(user_id):
+    """
+    Removes a user from the database.
+
+    Args:
+        user_id (int): The ID of the user to remove.
+    """
+    conn = sqlite3.connect('./record.db')
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM hosts WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
