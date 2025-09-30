@@ -35,6 +35,7 @@ def create_app():
     """
     # Configure Flask App
     app = flask.Flask(__name__)
+    app.config["SECRET_KEY"] = os.urandom(24)
     app.config["LIGHTHOUSE_NETWORK_KEY"] = os.getenv("LIGHTHOUSE_NETWORK_KEY")
     app.config["LIGHTHOUSE_PUBLIC_IP"] = os.getenv("LIGHTHOUSE_PUBLIC_IP")
     print(f"Lighthouse Public IP: {app.config.get('LIGHTHOUSE_PUBLIC_IP')}")
