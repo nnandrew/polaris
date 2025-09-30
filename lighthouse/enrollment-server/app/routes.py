@@ -17,35 +17,50 @@ import sqlite3
     
 main_bp = flask.Blueprint('main', __name__)
 
-@main_bp.route('/api/enroll', methods=['GET'])
+@main_bp.route('/api/enroll', methods=['GET', 'POST'])
 def enroll():
     """
-    Handles a new node enrollment request.
+    Handles node enrollment requests via API (GET) and admin panel (POST).
 
-    Authenticates the request using a 'LIGHTHOUSE_NETWORK_KEY' query parameter. If valid,
-    it generates a new Nebula configuration for the specified 'group_name',
-    sends the configuration file as an attachment, and then deletes the file
-    from the server.
-
-    Query Parameters:
-        network_key (str): The secret key for authorizing the request.
-        group_name (str): The Nebula security group for the new node.
+    GET: Requires 'LIGHTHOUSE_NETWORK_KEY' and 'group_name' as query parameters.
+    POST: Requires admin session and 'group_name' as form data.
 
     Returns:
         A Flask response object containing the config file or an error message.
     """
-    # Authenticate Request
-    network_key = flask.request.args.get('LIGHTHOUSE_NETWORK_KEY')
-    if not network_key or network_key != flask.current_app.config.get("LIGHTHOUSE_NETWORK_KEY"):
-        return "Unauthorized", 401
+    if flask.request.method == 'GET':
+        # API enrollment
+        network_key = flask.request.args.get('LIGHTHOUSE_NETWORK_KEY')
+        if not network_key or network_key != flask.current_app.config.get("LIGHTHOUSE_NETWORK_KEY"):
+            return "Unauthorized", 401
+        group_name = flask.request.args.get('group_name')
+        if not group_name:
+            return "Missing group_name", 400
+        ip_octet = None
         
-    # Generate Host Configuration
-    group_name = flask.request.args.get('group_name')
-    config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'))
-    response = flask.send_file(config_path, as_attachment=True)
-    response.call_on_close(lambda: os.remove(config_path))
-    
-    return response
+    else:
+        # Manual enrollment via admin panel
+        if not flask.session.get('logged_in'):
+            return flask.redirect(flask.url_for('main.admin'))
+        group_name = flask.request.args.get('group_name')
+        if not group_name:
+            return flask.redirect(flask.url_for('main.admin'))
+        ip_octet = flask.request.form.get('ip_octet')
+        if not ip_octet:
+            return flask.redirect(flask.url_for('main.admin'))
+        ip_octet = int(ip_octet)
+        if ip_octet < 2 or ip_octet > 254:
+            hosts = nebula.get_hosts()
+            return flask.render_template('admin.html', hosts=hosts, error="Invalid IP octet. Must be between 2 and 254.")
+
+    try:
+        config_path = nebula.generate_nebula_config_with_ip(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
+        response = flask.send_file(config_path, as_attachment=True)
+        response.call_on_close(lambda: os.remove(config_path))
+        return response
+    except Exception as e:
+        flask.current_app.logger.error(f"Manual enrollment failed: {str(e)}")
+        return f"Enrollment failed: {str(e)}", 500
 
 @main_bp.route('/api/ntrip', methods=['GET'])
 def ntrip():
@@ -92,17 +107,7 @@ def logout():
     flask.session.pop('logged_in', None)
     return flask.redirect(flask.url_for('main.admin'))
 
-@main_bp.route('/admin/add_user', methods=['POST'])
-def add_user():
-    if not flask.session.get('logged_in'):
-        return flask.redirect(flask.url_for('main.admin'))
-    group_name = flask.request.form.get('group_name')
-    if group_name:
-        nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'))
-    return flask.redirect(flask.url_for('main.admin'))
-
-
-@main_bp.route('/admin/remove_user', methods=['POST'])
+@main_bp.route('/api/remove', methods=['POST'])
 def remove_user():
     if not flask.session.get('logged_in'):
         return flask.redirect(flask.url_for('main.admin'))
@@ -111,7 +116,7 @@ def remove_user():
         nebula.remove_user(user_id)
     return flask.redirect(flask.url_for('main.admin'))
 
-@main_bp.route('/admin/rename_group', methods=['POST'])
+@main_bp.route('/api/rename', methods=['POST'])
 def rename_group():
     if not flask.session.get('logged_in'):
         return flask.redirect(flask.url_for('main.admin'))
@@ -119,16 +124,4 @@ def rename_group():
     new_group_name = flask.request.form.get('new_group_name')
     if user_id and new_group_name:
         nebula.rename_group(user_id, new_group_name)
-    return flask.redirect(flask.url_for('main.admin'))
-
-@main_bp.route('/admin/manual_enroll', methods=['POST'])
-def manual_enroll():
-    if not flask.session.get('logged_in'):
-        return flask.redirect(flask.url_for('main.admin'))
-    group_name = flask.request.form.get('group_name')
-    if group_name:
-        config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'))
-        response = flask.send_file(config_path, as_attachment=True)
-        response.call_on_close(lambda: os.remove(config_path))
-        return response
     return flask.redirect(flask.url_for('main.admin'))

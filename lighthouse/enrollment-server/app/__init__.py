@@ -9,7 +9,6 @@ import subprocess
 import os
 import tarfile
 import sqlite3
-import dotenv
 import requests
 import flask
 from .routes import main_bp 

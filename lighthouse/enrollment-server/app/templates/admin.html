@@ -7,19 +7,20 @@
     <style>
         body { font-family: sans-serif; }
         .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        .login-form { text-align: center; }
+        .login-form { text-align: left; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         table, th, td { border: 1px solid black; }
         th, td { padding: 8px; text-align: left; }
         .form-section { margin-top: 20px; }
         .error { color: red; }
+        button { width: 80px; }
     </style>
 </head>
 <body>
     <div class="container">
         {% if not session.logged_in %}
             <div class="login-form">
-                <h1>Admin Login</h1>
+                <h1>Nebula Admin Login</h1>
                 <form action="/admin/login" method="post">
                     <input type="password" name="password" placeholder="Password" required>
                     <button type="submit">Login</button>
@@ -29,62 +30,49 @@
                 {% endif %}
             </div>
         {% else %}
-            <h1>Admin Panel</h1>
+            <h1>Nebula Admin Panel</h1>
             <a href="/admin/logout">Logout</a>
 
-            <div class="form-section">
-                <h2>Add User</h2>
-                <form action="/admin/add_user" method="post">
-                    <label for="group_name">Group Name:</label>
-                    <input type="text" id="group_name" name="group_name" required>
-                    <button type="submit">Add User</button>
-                </form>
-            </div>
-
-            <div class="form-section">
-                <h2>Remove User</h2>
-                <form action="/admin/remove_user" method="post">
-                    <label for="user_id">User ID:</label>
-                    <input type="number" id="user_id" name="user_id" required>
-                    <button type="submit">Remove User</button>
-                </form>
-            </div>
-            
-            <div class="form-section">
-                <h2>Rename Group</h2>
-                <form action="/admin/rename_group" method="post">
-                    <label for="rename_user_id">User ID:</label>
-                    <input type="number" id="rename_user_id" name="user_id" required>
-                    <label for="new_group_name">New Group Name:</label>
-                    <input type="text" id="new_group_name" name="new_group_name" required>
-                    <button type="submit">Rename Group</button>
-                </form>
-            </div>
-            
-            <div class="form-section">
-                <h2>Manual Enrollment</h2>
-                <form action="/admin/manual_enroll" method="post">
-                    <label for="group_name_manual">Group Name:</label>
-                    <input type="text" id="group_name_manual" name="group_name" required>
-                    <button type="submit">Download Config</button>
-                </form>
-            </div>
-
-            <h2>Enrolled Hosts</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>VPN IP</th>
-                        <th>Group Name</th>
+                        <th>Name</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- Manual enrollment row -->
+                    <tr>
+                        <td>
+                            <form action="/api/enroll" method="post" style="display:inline;">
+                                <span>192.168.100.</span>
+                                <input type="number" name="ip_octet" min="2" max="254" placeholder="2-254" style="width: 60px;" required>
+                        </td>
+                        <td>
+                                <input type="text" name="group_name" placeholder="Name" required>
+                        </td>
+                        <td>
+                                <button type="submit">Add</button>
+                            </form>
+                        </td>
+                    </tr>
                     {% for host in hosts %}
                         <tr>
-                            <td>{{ host[0] }}</td>
                             <td>{{ host[1] }}</td>
-                            <td>{{ host[2] }}</td>
+                            <td>
+                                <form action="/admin/rename" method="post" style="display:inline;">
+                                    <input type="hidden" name="user_id" value="{{ host[0] }}">
+                                    <input type="text" name="new_group_name" value="{{ host[2] }}" required>
+                                    <button type="submit">Rename</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form action="/api/remove" method="post" style="display:inline;">
+                                    <input type="hidden" name="user_id" value="{{ host[0] }}">
+                                    <button type="submit">Remove</button>
+                                </form>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

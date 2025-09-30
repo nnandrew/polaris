@@ -17,7 +17,7 @@ yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True 
 yaml.default_flow_style = True
 
-def generate_nebula_config(group_name, public_ip):
+def generate_nebula_config(group_name, public_ip, ip_octet=None):
     """
     Generates a complete Nebula configuration file for a new node.
 
@@ -36,12 +36,14 @@ def generate_nebula_config(group_name, public_ip):
     Args:
         group_name (str): The name of the Nebula security group for the new node.
         public_ip (str): The public IP address of the lighthouse node.
+        ip_octet (int): The desired IP octet (2-254) for the new node.
 
     Returns:
         str: The file path to the newly generated configuration file.
     
     Raises:
         Exception: If the network runs out of available IP addresses (max 254).
+        Exception: If the specified IP address is already in use or invalid.
     """
     # Load Configuration Template
     with open("../config-template.yaml", "r") as config_file:
@@ -55,13 +57,20 @@ def generate_nebula_config(group_name, public_ip):
     else:
         cursor.execute("SELECT id FROM hosts ORDER BY id")
         used_ids = {row[0] for row in cursor.fetchall()}
-        # Find the smallest unused id in 1..254
-        for candidate_id in range(2, 255):
-            if candidate_id not in used_ids:
-                host_id = candidate_id
-                break
+        if ip_octet is None:
+            # Find the smallest unused id in 1..254
+            for candidate_id in range(2, 255):
+                if candidate_id not in used_ids:
+                    host_id = candidate_id
+                    break
+            else:
+                raise Exception("Network full.")
         else:
-            raise Exception("Network full.")
+            if ip_octet in used_ids:
+                raise Exception(f"IP address 192.168.100.{ip_octet} is already in use.")
+            if ip_octet < 2 or ip_octet > 254:
+                raise Exception("IP octet must be between 2 and 254.")
+            host_id = ip_octet
     
     vpn_ip = f"192.168.100.{host_id}"
     cursor.execute('''
