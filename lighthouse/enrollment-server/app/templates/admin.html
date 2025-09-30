@@ -37,6 +37,7 @@
                 <thead>
                     <tr>
                         <th>VPN IP</th>
+                        <th>Ping</th>
                         <th>Name</th>
                         <th>Actions</th>
                     </tr>
@@ -47,19 +48,20 @@
                         <td>
                             <form action="/api/enroll" method="post" style="display:inline;">
                                 <span>192.168.100.</span>
-                                <input type="number" name="ip_octet" min="2" max="254" placeholder="2-254" style="width: 60px;" required>
+                                <input type="number" name="ip_octet" min="2" max="254" placeholder="2-254" style="width: 50px;" required>
                         </td>
                         <td>
                                 <input type="text" name="group_name" placeholder="Name" required>
                         </td>
                         <td>
-                                <button type="submit">Add</button>
+                                <button type="submit">Download</button>
                             </form>
                         </td>
                     </tr>
                     {% for host in hosts %}
                         <tr>
                             <td>{{ host[1] }}</td>
+                            <td>{{ host[3] }} ms</td>
                             <td>
                                 <form action="/admin/rename" method="post" style="display:inline;">
                                     <input type="hidden" name="user_id" value="{{ host[0] }}">

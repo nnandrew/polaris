@@ -42,7 +42,7 @@ def enroll():
         # Manual enrollment via admin panel
         if not flask.session.get('logged_in'):
             return flask.redirect(flask.url_for('main.admin'))
-        group_name = flask.request.args.get('group_name')
+        group_name = flask.request.form.get('group_name')
         if not group_name:
             return flask.redirect(flask.url_for('main.admin'))
         ip_octet = flask.request.form.get('ip_octet')
