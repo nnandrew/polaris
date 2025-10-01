@@ -13,7 +13,8 @@
         th, td { padding: 8px; text-align: left; }
         .form-section { margin-top: 20px; }
         .error { color: red; }
-        button { width: 80px; }
+        button { width: 80px; margin-right: 5px; }
+        .action-buttons { white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -55,7 +56,7 @@
                                 <input type="text" name="group_name" placeholder="Name" required>
                         </td>
                         <td>
-                                <button type="submit">Download</button>
+                                <button type="submit">Add</button>
                             </form>
                         </td>
                     </tr>
@@ -70,10 +71,13 @@
                                     <button type="submit">Rename</button>
                                 </form>
                             </td>
-                            <td>
+                            <td class="action-buttons">
+                                <a href="/api/download_config/{{ host[0] }}" style="display:inline;">
+                                    <button type="button">Download</button>
+                                </a>
                                 <form action="/api/remove" method="post" style="display:inline;">
                                     <input type="hidden" name="user_id" value="{{ host[0] }}">
-                                    <button type="submit">Remove</button>
+                                    <button type="submit" {% if host[1] == "192.168.100.1" %}disabled{% endif %}>Remove</button>
                                 </form>
                             </td>
                         </tr>

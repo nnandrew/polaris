@@ -37,6 +37,10 @@ def enroll():
         if not group_name:
             return "Missing group_name", 400
         ip_octet = None
+        host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
+        if host_id is None:
+            return "Enrollment failed", 400
+        return flask.redirect(flask.url_for('main.download_config', host_id=host_id))
     else:
         # Manual enrollment via admin panel
         if not flask.session.get('logged_in'):
@@ -49,20 +53,9 @@ def enroll():
             return flask.redirect(flask.url_for('main.admin'))
         ip_octet = int(ip_octet)
         if ip_octet < 2 or ip_octet > 254:
-            hosts = nebula.get_hosts()
-            return flask.render_template('admin.html', hosts=hosts, error="Invalid IP octet. Must be between 2 and 254.")
-
-    try:
-        config_path = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
-        response = flask.send_file(config_path, as_attachment=True)
-        response.call_on_close(lambda: os.remove(config_path))
-        # For admin panel POST, redirect to admin page after sending file.
-        if flask.request.method == 'POST':
-            response.headers["Refresh"] = "0; url=" + flask.url_for('main.admin')
-        return response
-    except Exception as e:
-        flask.current_app.logger.error(f"Manual enrollment failed: {str(e)}")
-        return f"Enrollment failed: {str(e)}", 500
+            return flask.redirect(flask.url_for('main.admin'))
+        nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
+        return flask.redirect(flask.url_for('main.admin'))
 
 @main_bp.route('/api/ntrip', methods=['GET'])
 def ntrip():
@@ -145,3 +138,55 @@ def rename_group():
     if user_id and new_group_name:
         nebula.rename_group(user_id, new_group_name)
     return flask.redirect(flask.url_for('main.admin'))
+
+@main_bp.route('/api/download_config/<int:host_id>', methods=['GET'])
+def download_config(host_id):
+    """
+    Downloads the Nebula config file for a specific host. Requires admin session.
+    
+    Args:
+        host_id (int): The host ID from the database.
+        
+    Returns:
+        Flask response containing the config file or an error message.
+    """
+    if not flask.session.get('logged_in'):
+        return flask.redirect(flask.url_for('main.admin'))
+    
+    try:
+        # Verify the host exists in the database
+        conn = sqlite3.connect('./record.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT group_name FROM hosts WHERE id = ?", (host_id,))
+        result = cursor.fetchone()
+        conn.close()
+        
+        if not result:
+            flask.current_app.logger.error(f"Host {host_id} not found in database")
+            return "Host not found", 404
+        
+        group_name = result[0]
+        
+        # Handle lighthouse config (host_id = 1) which has a different filename
+        if host_id == 1:
+            config_path = "/home/enrollment-server/shared/config.yml"
+            download_name = f"nebula_config_lighthouse.yml"
+        else:
+            config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
+            download_name = f"nebula_config_{group_name}_{host_id}.yaml"
+        
+        # Check if file exists
+        if not os.path.exists(config_path):
+            flask.current_app.logger.error(f"Config file not found: {config_path}")
+            return f"Config file not found for {group_name} (ID: {host_id}). The config may not have been generated yet.", 404
+        
+        flask.current_app.logger.info(f"Downloading config for {group_name} (ID: {host_id})")
+        return flask.send_file(
+            config_path, 
+            as_attachment=True, 
+            download_name=download_name
+        )
+        
+    except Exception as e:
+        flask.current_app.logger.error(f"Config download failed for host {host_id}: {str(e)}")
+        return f"Download failed: {str(e)}", 500
