@@ -115,32 +115,33 @@ def logout():
     return flask.redirect(flask.url_for('main.admin'))
 
 @main_bp.route('/api/remove', methods=['POST'])
-def remove_user():
+def remove():
     """
-    Removes a user from the Nebula network. Requires admin session.
+    Removes a host from the Nebula network. Requires admin session.
     """
     if not flask.session.get('logged_in'):
         return flask.redirect(flask.url_for('main.admin'))
-    user_id = flask.request.form.get('user_id')
-    if user_id:
-        nebula.remove_user(user_id)
+    host_id = flask.request.form.get('host_id')
+    if host_id:
+        nebula.remove_host(host_id)
+        os.remove(f"/home/enrollment-server/shared/config_{host_id}.yaml")
     return flask.redirect(flask.url_for('main.admin'))
 
 @main_bp.route('/api/rename', methods=['POST'])
-def rename_group():
+def rename():
     """
-    Renames a user's group in the Nebula network. Requires admin session.
+    Renames a host's group in the Nebula network. Requires admin session.
     """
     if not flask.session.get('logged_in'):
         return flask.redirect(flask.url_for('main.admin'))
-    user_id = flask.request.form.get('user_id')
+    host_id = flask.request.form.get('host_id')
     new_group_name = flask.request.form.get('new_group_name')
-    if user_id and new_group_name:
-        nebula.rename_group(user_id, new_group_name)
+    if host_id and new_group_name:
+        nebula.rename_group(host_id, new_group_name)
     return flask.redirect(flask.url_for('main.admin'))
 
-@main_bp.route('/api/download_config/<int:host_id>', methods=['GET'])
-def download_config(host_id):
+@main_bp.route('/api/download_config', methods=['POST'])
+def download_config():
     """
     Downloads the Nebula config file for a specific host. Requires admin session.
     
@@ -152,6 +153,7 @@ def download_config(host_id):
     """
     if not flask.session.get('logged_in'):
         return flask.redirect(flask.url_for('main.admin'))
+    host_id = flask.request.form.get('host_id')
     
     try:
         # Verify the host exists in the database

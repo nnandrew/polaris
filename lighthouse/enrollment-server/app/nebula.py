@@ -181,29 +181,29 @@ def get_hosts():
 
     return hosts_with_status
 
-def remove_user(user_id):
+def remove_host(host_id):
     """
     Removes a user from the database.
 
     Args:
-        user_id (int): The user's ID.
+        host_id (int): The host's ID.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM hosts WHERE id = ?", (user_id,))
+    cursor.execute("DELETE FROM hosts WHERE id = ?", (host_id,))
     conn.commit()
     conn.close()
 
-def rename_group(user_id, new_group_name):
+def rename_group(host_id, new_group_name):
     """
-    Renames the group for a given user.
+    Renames the group for a given host.
 
     Args:
-        user_id (int): The user's ID.
+        host_id (int): The host's ID.
         new_group_name (str): The new group name.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
-    cursor.execute("UPDATE hosts SET group_name = ? WHERE id = ?", (new_group_name, user_id))
+    cursor.execute("UPDATE hosts SET group_name = ? WHERE id = ?", (new_group_name, host_id))
     conn.commit()
     conn.close()

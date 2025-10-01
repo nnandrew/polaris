@@ -66,17 +66,18 @@
                             <td>{{ host[3] }} ms</td>
                             <td>
                                 <form action="/api/rename" method="post" style="display:inline;">
-                                    <input type="hidden" name="user_id" value="{{ host[0] }}">
+                                    <input type="hidden" name="host_id" value="{{ host[0] }}">
                                     <input type="text" name="new_group_name" value="{{ host[2] }}" required>
-                                    <button type="submit">Rename</button>
+                                    <button type="submit" {% if host[1] == "192.168.100.1" %}disabled{% endif %}>Rename</button>
                                 </form>
                             </td>
                             <td class="action-buttons">
-                                <a href="/api/download_config/{{ host[0] }}" style="display:inline;">
-                                    <button type="button">Download</button>
-                                </a>
+                                <form action="/api/download_config" method="post" style="display:inline;">
+                                    <input type="hidden" name="host_id" value="{{ host[0] }}">
+                                    <button type="submit" {% if host[1] == "192.168.100.1" %}disabled{% endif %}>Download</button>
+                                </form>
                                 <form action="/api/remove" method="post" style="display:inline;">
-                                    <input type="hidden" name="user_id" value="{{ host[0] }}">
+                                    <input type="hidden" name="host_id" value="{{ host[0] }}">
                                     <button type="submit" {% if host[1] == "192.168.100.1" %}disabled{% endif %}>Remove</button>
                                 </form>
                             </td>
