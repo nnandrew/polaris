@@ -15,7 +15,6 @@ The script is configured via a `GPS_TYPE` variable and environment variables
 for InfluxDB credentials. It is designed to be terminated with CTRL-C.
 """
 import os
-import sys
 import dotenv
 from queue import Queue
 from time import sleep
@@ -38,9 +37,7 @@ from maps import (
     gpsFixOk_map,
     diffSoln_map
 )
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
-import gps_reader
-import ip_getter
+from common import gps_reader, ip_getter
 
 def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     """
@@ -185,8 +182,22 @@ def influx_write_thread(gps_type, gps, stop_event):
             ubr = gps.get_reader()
             
     gps.close_serial()
-    client.close()      
-                
+    client.close()
+
+def get_current_utc_time():
+    current_time = datetime.now(timezone.utc)
+    print(current_time)
+    return current_time
+
+def stopwatch(stop_event):
+    while not stop_event.is_set():
+        input("Press Enter to start the stopwatch...\n")
+        start_utc = get_current_utc_time()
+        input('Press Enter to stop the stopwatch...\n')
+        finish_utc = get_current_utc_time()
+        diff = finish_utc - start_utc
+        print(diff.total_seconds())
+
 def app():
     """
     Main application function to set up and run the NTRIP client threads.
@@ -234,7 +245,16 @@ def app():
             args=(GPS_TYPE, gps, stop_event),
             daemon=True
         )
-    )        
+    )
+    # Uncomment Below to include a stopwatch in the CLI that will show the
+    # start and stop UTC time along with the total seconds.
+    # thread_pool.append(
+    #     Thread(
+    #         target=stopwatch,
+    #         args=(stop_event,),
+    #         daemon=True
+    #     )
+    # )
     # Start the threads
     for t in thread_pool:
         t.start()
