@@ -37,7 +37,11 @@ from maps import (
     gpsFixOk_map,
     diffSoln_map
 )
-from common import gps_reader, ip_getter
+# from common import gps_reader, ip_getter
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
+import gps_reader
+import ip_getter
 
 def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     """
@@ -55,14 +59,14 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     print(f"{'rtcm_get_thread':<20}: Starting...")
     gnc = GNSSNTRIPClient()
     gnc.run(
-        # Public RTK (7km away, unreliable)
-        server="rtk2go.com",
-        mountpoint="AUS_LOFT_GNSS",
-        ntripuser="andrewvnguyen@utexas.edu",
+        # Public RTK 12km away, unreliable)
+        # server="rtk2go.com",
+        # mountpoint="AUS_LOFT_GNSS",
+        # ntripuser="andrewvnguyen@utexas.edu",
         #Private RTK
-        # server="192.168.100.11", # Private RTK, TODO: get with /api/ntrip
-        # mountpoint="pygnssutils",
-        # ntripuser="test",
+        server="192.168.100.3", # Private RTK, TODO: get with /api/ntrip
+        mountpoint="pygnssutils",
+        ntripuser="test",
         ntrippassword="none",
         port=2101,
         https=0,
@@ -248,13 +252,13 @@ def app():
     )
     # Uncomment Below to include a stopwatch in the CLI that will show the
     # start and stop UTC time along with the total seconds.
-    # thread_pool.append(
-    #     Thread(
-    #         target=stopwatch,
-    #         args=(stop_event,),
-    #         daemon=True
-    #     )
-    # )
+    thread_pool.append(
+        Thread(
+            target=stopwatch,
+            args=(stop_event,),
+            daemon=True
+        )
+    )
     # Start the threads
     for t in thread_pool:
         t.start()

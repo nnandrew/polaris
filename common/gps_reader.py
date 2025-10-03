@@ -76,7 +76,9 @@ class Budget(Generic):
                 rateUSB=1,         # Enable on USB
             ),
         ]
-        return super().get_reader(BAUD_RATE, msgs)
+        vid = 0x1546
+        pid = 0x01A7
+        return super().get_reader(BAUD_RATE, msgs, vid, pid)
 
 class Premium(Generic):
     """A GPS reader specifically for the u-blox M10 module."""
@@ -97,7 +99,9 @@ class Premium(Generic):
                 rateUART1=1,       # Enable on USB?
             ),
         ]
-        return super().get_reader(BAUD_RATE, msgs)
+        vid = 0x067B
+        pid = 0x23A3
+        return super().get_reader(BAUD_RATE, msgs, vid, pid)
         
 class SparkFun(Generic):
     """A GPS reader specifically for the u-blox ZED-FP9 module."""
