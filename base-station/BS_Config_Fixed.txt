@@ -23,12 +23,16 @@ Flash CFG-RATE-TIMEREF 1
 Flash CFG-UART1-BAUDRATE 0x70800
 
 # Base Station Specific Configuration
-  RAM CFG-TMODE-MODE 1                      # SURVERY_IN mode
-Flash CFG-TMODE-MODE 1
-  RAM CFG-TMODE-SVIN_MIN_DUR 0x3c           # 60 s minimum duration
-Flash CFG-TMODE-SVIN_MIN_DUR 0x3c
-  RAM CFG-TMODE-SVIN_ACC_LIMIT 0xc350       # 5000 mm position accuracy limit
-Flash CFG-TMODE-SVIN_ACC_LIMIT 0xc350
+  RAM CFG-TMODE-MODE 2                      # Fixed mode
+Flash CFG-TMODE-MODE 2
+  RAM CFG-TMODE-POS_TYPE 1                  # Lattitude, Longitude, Height Mode
+Flash CFG-TMODE-POS_TYPE 1
+  RAM CFG-TMODE-LAT 302843600               # 1e-7
+Flash CFG-TMODE-LAT 302843600
+  RAM CFG-TMODE-LON 0xfffffffffa2cc1d3      # 1e-7
+Flash CFG-TMODE-LON 0xfffffffffa2cc1d3
+  RAM CFG-TMODE-HEIGHT 23860                # cm
+Flash CFG-TMODE-HEIGHT 23860
 
 # Configuration from Official Config File
   RAM CFG-UART1INPROT-NMEA 0            # Disable NMEA Input on UART1 (it won't expect/decode those messages)

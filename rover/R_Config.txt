@@ -51,4 +51,5 @@ Flash CFG-USBOUTPROT-RTCM3X 0
 
   RAM CFG-MSGOUT-UBX_NAV_PVT_USB 0x1                # Enables UBX_NAV_PVT messages on USB
 Flash CFG-MSGOUT-UBX_NAV_PVT_USB 0x1
-
+  RAM CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1                # Enables UBX_NAV_PVT messages on USB
+Flash CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1

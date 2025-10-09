@@ -37,11 +37,14 @@ from maps import (
     gpsFixOk_map,
     diffSoln_map
 )
-# from common import gps_reader, ip_getter
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
-import gps_reader
-import ip_getter
+try:
+    from common import gps_reader, ip_getter, u_center_config
+except ImportError:
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
+    import gps_reader
+    import ip_getter
+    import u_center_config
 
 def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     """
@@ -163,8 +166,8 @@ def influx_write_thread(gps_type, gps, stop_event):
                     print(f"{'influx_write_thread':<20}: Longitude: {parsed.lon}")
                 # Log fix type and status
                 points.field("fix_type_int", int(parsed.fixType)) \
-                      .field("fix_ok_int", int(parsed.gnssFixOk)) \
-                      .field("differential_solution_int", int(parsed.diffSoln))
+                        .field("fix_ok_int", int(parsed.gnssFixOk)) \
+                        .field('carrier_phase_range_int', int(parsed.carrSoln))
 
                 if parsed.validTime and parsed.validDate:
                     dt = datetime(
@@ -174,8 +177,9 @@ def influx_write_thread(gps_type, gps, stop_event):
                     )
                     points.time(int(dt.timestamp() * 1e9))
 
-                client.write(database="GPS", record=points, write_precision="s")                
+                client.write(database="GPS", record=points, write_precision="s")
                 print(f"{'influx_write_thread':<20}: Wrote valid NAV-PVT data to InfluxDB.")
+                print(f'Carrier phase: {parsed.carrSoln}')
                 
         except (KeyboardInterrupt, SystemExit):
             break
@@ -219,14 +223,17 @@ def app():
     
     # Configure GPS type
     GPS_TYPE = "sparkfun"
-      
+    config_msg = None
     match GPS_TYPE:
         case "budget":
             gps = gps_reader.Budget()
+            config_msg = gps.get_config_msg()
         case "premium":
             gps = gps_reader.Premium()
+            config_msg = gps.get_config_msg()
         case "sparkfun":
             gps = gps_reader.SparkFun()
+            config_msg = u_center_config.convert_u_center_config('../R_Config.txt')
             gnss_rtcm_queue = Queue()
             thread_pool.append(
                 Thread(
@@ -259,6 +266,17 @@ def app():
             daemon=True
         )
     )
+
+    # Configure the receiver
+    try:
+        nar= u_center_config.send_config(config_msg, gps.ser)
+        if not nar:
+            print('ERROR writing config')
+            return
+    except Exception as e:
+        print(f'Unexpected Error when writing config: {e}')
+        return
+
     # Start the threads
     for t in thread_pool:
         t.start()
