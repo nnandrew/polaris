@@ -1,0 +1,89 @@
+# Config changes format version 1.0
+# created by Yahir Lopez
+[del]
+[set]
+# Team Specific-Sugessted Configs
+  RAM CFG-INFMSG-UBX_UART1 0x17             # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the UBX Protocol on UART1
+Flash CFG-INFMSG-UBX_UART1 0x17
+  RAM CFG-INFMSG-NMEA_UART1 0x17            # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the NEMA Protocol on UART1
+Flash CFG-INFMSG-NMEA_UART1 0x17
+  RAM CFG-INFMSG-UBX_USB 0x17               # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the UBX Protocol on UART1
+Flash CFG-INFMSG-UBX_USB 0x17
+  RAM CFG-INFMSG-NMEA_USB 0x17              # Enable DEBUG, ERROR, WARNING, and NOTICE information messages for the NEMA Protocol on UART1
+Flash CFG-INFMSG-NMEA_USB 0x17
+  RAM CFG-NAVSPG-DYNMODEL 2                 # Stationary platform model (IDK what this does tbh, but sounds useful)
+Flash CFG-NAVSPG-DYNMODEL 2
+  RAM CFG-NMEA-HIGHPREC 1                   # Increase precision of position output. Long and Lat have 7 digits after decimal and altitude has 3.
+Flash CFG-NMEA-HIGHPREC 1
+  RAM CFG-NMEA-PROTVER 41                   # NMEA Protocol Version 4.10 (default)
+Flash CFG-NMEA-PROTVER 41
+  RAM CFG-RATE-TIMEREF 1                    # Time system to which measurements are aligned (GPS by default)
+Flash CFG-RATE-TIMEREF 1
+  RAM CFG-UART1-BAUDRATE 0x70800            # UART Baudrate (suggested from following config)
+Flash CFG-UART1-BAUDRATE 0x70800
+
+# Base Station Specific Configuration
+  RAM CFG-TMODE-MODE 2                      # Fixed mode
+Flash CFG-TMODE-MODE 2
+  RAM CFG-TMODE-POS_TYPE 1                  # Lattitude, Longitude, Height Mode
+Flash CFG-TMODE-POS_TYPE 1
+  RAM CFG-TMODE-LAT 302843600               # 1e-7
+Flash CFG-TMODE-LAT 302843600
+  RAM CFG-TMODE-LON 0xfffffffffa2cc1d3      # 1e-7
+Flash CFG-TMODE-LON 0xfffffffffa2cc1d3
+  RAM CFG-TMODE-HEIGHT 23860                # cm
+Flash CFG-TMODE-HEIGHT 23860
+
+# Configuration from Official Config File
+  RAM CFG-UART1INPROT-NMEA 0            # Disable NMEA Input on UART1 (it won't expect/decode those messages)
+Flash CFG-UART1INPROT-NMEA 0
+  RAM CFG-UART1INPROT-UBX 0             # Disable UBX input on UART1
+Flash CFG-UART1INPROT-UBX 0
+  RAM CFG-UART1INPROT-RTCM3X 0          # Disable RTCM3X input on UART1
+Flash CFG-UART1INPROT-RTCM3X 0
+  RAM CFG-UART1OUTPROT-UBX 0            # Disable UBX output on UART1
+Flash CFG-UART1OUTPROT-UBX 0
+  RAM CFG-UART1OUTPROT-NMEA 0           # Disable NMEA output on UART1
+Flash CFG-UART1OUTPROT-NMEA 0
+  RAM CFG-UART1OUTPROT-RTCM3X 1         # Enable RTCM3 output on UART1
+Flash CFG-UART1OUTPROT-RTCM3X 1
+  RAM CFG-USBINPROT-NMEA 0            # Disable NMEA Input on USB (it won't expect/decode those messages)
+Flash CFG-USBINPROT-NMEA 0
+  RAM CFG-USBINPROT-UBX 0             # Disable UBX input on USB
+Flash CFG-USBINPROT-UBX 0
+  RAM CFG-USBINPROT-RTCM3X 0          # Disable RTCM3X input on USB
+Flash CFG-USBINPROT-RTCM3X 0
+  RAM CFG-USBOUTPROT-UBX 0            # Disable UBX output on USB
+Flash CFG-USBOUTPROT-UBX 0
+  RAM CFG-USBOUTPROT-NMEA 0           # Disable NMEA output on USB
+Flash CFG-USBOUTPROT-NMEA 0
+  RAM CFG-USBOUTPROT-RTCM3X 1         # Enable RTCM3 output on USB
+Flash CFG-USBOUTPROT-RTCM3X 1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1005_UART1 0x1         # Enable RTCM3 1005 Outputs on UART1 w/ output rate 1?
+Flash CFG-MSGOUT-RTCM_3X_TYPE1005_UART1 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1074_UART1 0x1         # Enable RTCM3 1074 Outputs on UART1
+Flash CFG-MSGOUT-RTCM_3X_TYPE1074_UART1 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1084_UART1 0x1         # Enable RTCM3 1084 Outputs on UART1
+Flash CFG-MSGOUT-RTCM_3X_TYPE1084_UART1 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1124_UART1 0x1         # Enable RTCM3 1124 Outputs on UART1
+Flash CFG-MSGOUT-RTCM_3X_TYPE1124_UART1 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1230_UART1 0x5         # Enable RTCM3 1230 Outputs on UART1 w/ output rate 5?
+Flash CFG-MSGOUT-RTCM_3X_TYPE1230_UART1 0x5
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1094_UART1 0x1         # Enable RTCM3 1094 Outputs on UART1
+Flash CFG-MSGOUT-RTCM_3X_TYPE1094_UART1 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1005_USB 0x1           # Enable RTCM3 1005 Outputs on USB w/ output rate 1?
+Flash CFG-MSGOUT-RTCM_3X_TYPE1005_USB 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1074_USB 0x1           # Enable RTCM3 1074 Outputs on USB
+Flash CFG-MSGOUT-RTCM_3X_TYPE1074_USB 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1084_USB 0x1           # Enable RTCM3 1084 Outputs on USB
+Flash CFG-MSGOUT-RTCM_3X_TYPE1084_USB 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1124_USB 0x1           # Enable RTCM3 1134 Outputs on USB
+Flash CFG-MSGOUT-RTCM_3X_TYPE1124_USB 0x1
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1230_USB 0x5           # Enable RTCM3 1230 Outputs on USB w/ output rate 5
+Flash CFG-MSGOUT-RTCM_3X_TYPE1230_USB 0x5
+  RAM CFG-MSGOUT-RTCM_3X_TYPE1094_USB 0x1           # Enable RTCM3 1094 Outputs on USB
+Flash CFG-MSGOUT-RTCM_3X_TYPE1094_USB 0x1
+  RAM CFG-MSGOUT-UBX_NAV_PVT_USB 0x1                # Enables UBX_NAV_PVT messages on USB
+Flash CFG-MSGOUT-UBX_NAV_PVT_USB 0x1
+  RAM CFG-MSGOUT-UBX_NAV_SVIN_USB 0x1               # Enables UBX_NAV_SVIN messages on USB
+Flash CFG-MSGOUT-UBX_NAV_SVIN_USB 0x1

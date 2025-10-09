@@ -5,14 +5,23 @@ This script initializes a GPS device, determines the local IP address, and
 starts the `gnssserver` process to broadcast GNSS data as an NTRIP caster.
 """
 import subprocess
-from common import gps_reader, ip_getter
+try:
+    from common import gps_reader, ip_getter, u_center_config
+except ImportError:
+    import os
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
+    import gps_reader
+    import ip_getter
+    import u_center_config
 
 def main():
     """
     Initializes the GPS, gets the IP address, and starts the gnssserver.
     """
     gps = gps_reader.SparkFun()
-    gps.get_reader()
+    config_msg = u_center_config.convert_u_center_config('../BS_Config_Fixed.txt')
+    u_center_config.send_config(config_msg, gps.ser)
     com = gps.port
     # Binds to all available interfaces
     ip_addr = "0.0.0.0"
