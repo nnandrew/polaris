@@ -23,6 +23,7 @@ def main():
     config_msg = u_center_config.convert_u_center_config('../BS_Config_Fixed.txt')
     u_center_config.send_config(config_msg, gps.ser)
     com = gps.port
+    gps.close_serial()
     # Binds to all available interfaces
     ip_addr = "0.0.0.0"
     print(f"Using IP address: {ip_addr}")

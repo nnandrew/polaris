@@ -21,11 +21,12 @@ from time import sleep
 from pygnssutils import GNSSNTRIPClient
 from datetime import datetime, timezone
 from threading import (
-    Event, 
-    Thread
+    Event,
+    Thread,
+    Lock
 )
 from influxdb_client_3 import (
-    InfluxDBClient3, 
+    InfluxDBClient3,
     Point
 )
 from pyubx2 import (
@@ -85,8 +86,8 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     )
     while not stop_event.is_set():
         sleep(10)
-        
-def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type):
+
+def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
     """
     Reads RTCM3 data from a queue and sends it to the GPS device.
 
@@ -98,6 +99,8 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type):
         gnss_rtcm_queue (Queue): The queue from which to get RTCM data.
         gps (gps_reader.Generic): The GPS reader instance with an open serial port.
         stop_event (Event): A threading event to signal when to stop.
+        gps_type:
+        lock:
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
     dotenv.load_dotenv()
@@ -110,11 +113,13 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type):
             try:
                 raw_data, _ = gnss_rtcm_queue.get()
                 if protocol(raw_data) == RTCM3_PROTOCOL:
+                    lock.acquire()
                     gps.ser.write(raw_data)
+                    lock.release()
                     print(f"{'rtcm_process_thread':<20}: Sent to GPS!")
                     points = Point("metrics").tag("device", gps_type)
                     points.field("ntrip_client_rtcm_recieved", True)
-                    client.write(database="GPS", record=points, write_precision="s")                
+                    client.write(database="GPS", record=points, write_precision="s")
                 else:
                     print(f"{'rtcm_process_thread':<20}: Discarding non-RTCM3 data.")
             except Exception as err:
@@ -122,8 +127,8 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type):
             gnss_rtcm_queue.task_done()
         sleep(1) # Prevent busy-waiting
 
-                
-def influx_write_thread(gps_type, gps, stop_event):
+
+def influx_write_thread(gps_type, gps, stop_event, influx_queue):
     """
     Reads parsed UBX NAV-PVT data from the GPS and writes it to InfluxDB.
 
@@ -136,6 +141,7 @@ def influx_write_thread(gps_type, gps, stop_event):
         gps_type (str): The type of GPS device (e.g., "sparkfun").
         gps (gps_reader.Generic): The GPS reader instance.
         stop_event (Event): A threading event to signal when to stop.
+        influx_queue:
     """
     print(f"{'influx_write_thread':<20}: Starting...")
     dotenv.load_dotenv()
@@ -143,15 +149,13 @@ def influx_write_thread(gps_type, gps, stop_event):
     org = "GPSSensorData"
     host = "https://us-east-1-1.aws.cloud2.influxdata.com"
     client = InfluxDBClient3(host=host, token=token, org=org)
-    ubr = gps.get_reader()
 
     while not stop_event.is_set():
         try:
-            _, parsed = ubr.read()
-
-            if parsed and parsed.identity == 'NAV-PVT':
+            if not influx_queue.empty():
+                parsed = influx_queue.get()
                 points = Point("metrics").tag("device", gps_type)
-                
+
                 if parsed.gnssFixOk:
                     points.field("latitude", parsed.lat) \
                           .field("longitude", parsed.lon) \
@@ -180,17 +184,50 @@ def influx_write_thread(gps_type, gps, stop_event):
                 client.write(database="GPS", record=points, write_precision="s")
                 print(f"{'influx_write_thread':<20}: Wrote valid NAV-PVT data to InfluxDB.")
                 print(f'Carrier phase: {parsed.carrSoln}')
-                
+
         except (KeyboardInterrupt, SystemExit):
             break
         except Exception as e:
             print(f"{'influx_write_thread':<20}: Error: {e}. Re-initializing...")
             # Attempt to re-initialize connections on error
             client = InfluxDBClient3(host=host, token=token, org=org)
-            ubr = gps.get_reader()
-            
+
     gps.close_serial()
     client.close()
+
+def read_messages_thread(stop_event, ubx_reader, influx_queue, debug_queue, lock):
+    """
+    Reads, parses and prints out incoming UBX messages
+    """
+    # pylint: disable=unused-variable, broad-except
+    while not stop_event.is_set():
+        try:
+            lock.acquire()
+            _, parsed_data = ubx_reader.read()
+            lock.release()
+            if parsed_data and parsed_data.identity == 'NAV-PVT':
+                influx_queue.put(parsed_data)
+            elif parsed_data and parsed_data.identity == 'RXM-RTCM':
+                debug_queue.put(parsed_data)
+            # elif parsed_data:
+            #     print(f'IDK This data: {parsed_data}')
+        except Exception as err:
+            print(f"\n\nSomething went wrong {err}\n\n")
+            continue
+
+def debug_thread(stop_event, debug_queue):
+    """
+    Reads, parses and prints out incoming UBX messages
+    """
+    # pylint: disable=unused-variable, broad-except
+    while not stop_event.is_set():
+        try:
+            if not debug_queue.empty():
+                parsed_data = debug_queue.get()
+                print(f'DEBUG: {parsed_data}')
+        except Exception as err:
+            print(f"\n\nSomething went wrong {err}\n\n")
+            continue
 
 def get_current_utc_time():
     current_time = datetime.now(timezone.utc)
@@ -209,18 +246,21 @@ def stopwatch(stop_event):
 def app():
     """
     Main application function to set up and run the NTRIP client threads.
-    
+
     Initializes the appropriate GPS reader based on the `GPS_TYPE` setting,
     creates and starts the necessary threads for data fetching, processing,
 
     and logging, and then waits for a `KeyboardInterrupt` to terminate.
     """
     print("Starting NTRIP Client...")
-    
+
     thread_pool = []
     gps = None
     stop_event = Event()
-    
+    influx_queue = Queue()
+    debug_queue = Queue()
+    lock = Lock()
+
     # Configure GPS type
     GPS_TYPE = "sparkfun"
     config_msg = None
@@ -245,27 +285,40 @@ def app():
             thread_pool.append(
                 Thread(
                     target=rtcm_process_thread,
-                    args=(gnss_rtcm_queue, gps, stop_event, GPS_TYPE),
+                    args=(gnss_rtcm_queue, gps, stop_event, GPS_TYPE, lock),
                     daemon=True
                 )
             )
-    
+
+    thread_pool.append(
+        Thread(
+            target=read_messages_thread,
+            args=(stop_event, gps.get_reader(), influx_queue, debug_queue, lock),
+        )
+    )
     thread_pool.append(
         Thread(
             target=influx_write_thread,
-            args=(GPS_TYPE, gps, stop_event),
+            args=(GPS_TYPE, gps, stop_event, influx_queue),
+            daemon=True
+        )
+    )
+    thread_pool.append(
+        Thread(
+            target=debug_thread,
+            args=(stop_event, debug_queue),
             daemon=True
         )
     )
     # Uncomment Below to include a stopwatch in the CLI that will show the
     # start and stop UTC time along with the total seconds.
-    thread_pool.append(
-        Thread(
-            target=stopwatch,
-            args=(stop_event,),
-            daemon=True
-        )
-    )
+    # thread_pool.append(
+    #     Thread(
+    #         target=stopwatch,
+    #         args=(stop_event,),
+    #         daemon=True
+    #     )
+    # )
 
     # Configure the receiver
     try:

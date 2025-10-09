@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.10-slim
 WORKDIR /home/ntrip-client
 
 # Copying and Installing the requirements first to optimize building the docker image:
