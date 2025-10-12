@@ -27,12 +27,12 @@ Flash CFG-UART1-BAUDRATE 0x70800
 Flash CFG-TMODE-MODE 2
   RAM CFG-TMODE-POS_TYPE 1                  # Lattitude, Longitude, Height Mode
 Flash CFG-TMODE-POS_TYPE 1
-  RAM CFG-TMODE-LAT 302843600               # 1e-7
-Flash CFG-TMODE-LAT 302843600
-  RAM CFG-TMODE-LON 0xfffffffffa2cc1d3      # 1e-7
-Flash CFG-TMODE-LON 0xfffffffffa2cc1d3
-  RAM CFG-TMODE-HEIGHT 23860                # cm
-Flash CFG-TMODE-HEIGHT 23860
+  RAM CFG-TMODE-LAT 303302879               # 1e-7
+Flash CFG-TMODE-LAT 303302879
+  RAM CFG-TMODE-LON 0xffffffffc5be3e90      # 1e-7
+Flash CFG-TMODE-LON 0xffffffffc5be3e90
+  RAM CFG-TMODE-HEIGHT 19021                # cm
+Flash CFG-TMODE-HEIGHT 19021
 
 # Configuration from Official Config File
   RAM CFG-UART1INPROT-NMEA 0            # Disable NMEA Input on UART1 (it won't expect/decode those messages)
@@ -47,6 +47,7 @@ Flash CFG-UART1OUTPROT-UBX 1
 Flash CFG-UART1OUTPROT-NMEA 0
   RAM CFG-UART1OUTPROT-RTCM3X 1         # Enable RTCM3 output on UART1
 Flash CFG-UART1OUTPROT-RTCM3X 1
+
   RAM CFG-USBINPROT-NMEA 0            # Disable NMEA Input on USB (it won't expect/decode those messages)
 Flash CFG-USBINPROT-NMEA 0
   RAM CFG-USBINPROT-UBX 1             # Enable UBX input on USB
@@ -59,6 +60,7 @@ Flash CFG-USBOUTPROT-UBX 1
 Flash CFG-USBOUTPROT-NMEA 0
   RAM CFG-USBOUTPROT-RTCM3X 1         # Enable RTCM3 output on USB
 Flash CFG-USBOUTPROT-RTCM3X 1
+
   RAM CFG-MSGOUT-RTCM_3X_TYPE1005_UART1 0x1         # Enable RTCM3 1005 Outputs on UART1 w/ output rate 1?
 Flash CFG-MSGOUT-RTCM_3X_TYPE1005_UART1 0x1
   RAM CFG-MSGOUT-RTCM_3X_TYPE1074_UART1 0x1         # Enable RTCM3 1074 Outputs on UART1
@@ -71,6 +73,7 @@ Flash CFG-MSGOUT-RTCM_3X_TYPE1124_UART1 0x1
 Flash CFG-MSGOUT-RTCM_3X_TYPE1230_UART1 0x5
   RAM CFG-MSGOUT-RTCM_3X_TYPE1094_UART1 0x1         # Enable RTCM3 1094 Outputs on UART1
 Flash CFG-MSGOUT-RTCM_3X_TYPE1094_UART1 0x1
+
   RAM CFG-MSGOUT-RTCM_3X_TYPE1005_USB 0x1           # Enable RTCM3 1005 Outputs on USB w/ output rate 1?
 Flash CFG-MSGOUT-RTCM_3X_TYPE1005_USB 0x1
   RAM CFG-MSGOUT-RTCM_3X_TYPE1074_USB 0x1           # Enable RTCM3 1074 Outputs on USB
@@ -83,6 +86,7 @@ Flash CFG-MSGOUT-RTCM_3X_TYPE1124_USB 0x1
 Flash CFG-MSGOUT-RTCM_3X_TYPE1230_USB 0x5
   RAM CFG-MSGOUT-RTCM_3X_TYPE1094_USB 0x1           # Enable RTCM3 1094 Outputs on USB
 Flash CFG-MSGOUT-RTCM_3X_TYPE1094_USB 0x1
+
   RAM CFG-MSGOUT-UBX_NAV_PVT_USB 0x1                # Enables UBX_NAV_PVT messages on USB
 Flash CFG-MSGOUT-UBX_NAV_PVT_USB 0x1
   RAM CFG-MSGOUT-UBX_NAV_SVIN_USB 0x1               # Enables UBX_NAV_SVIN messages on USB

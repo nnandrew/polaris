@@ -22,6 +22,10 @@ Flash CFG-RATE-TIMEREF 1
   RAM CFG-UART1-BAUDRATE 0x70800            # UART Baudrate (suggested from following config)
 Flash CFG-UART1-BAUDRATE 0x70800
 
+# Base Station Specific Configuration
+  RAM CFG-TMODE-MODE 0                  # Disable Any Base Station Related Configs
+Flash CFG-TMODE-MODE 0
+
 # Configuration from Official Config File
   RAM CFG-UART1INPROT-NMEA 0            # Disable NMEA Input on UART1 (it won't expect/decode those messages)
 Flash CFG-UART1INPROT-NMEA 0
@@ -36,20 +40,24 @@ Flash CFG-UART1OUTPROT-NMEA 1
   RAM CFG-UART1OUTPROT-RTCM3X 0         # Disable RTCM3 output on UART1
 Flash CFG-UART1OUTPROT-RTCM3X 0
 
-  RAM CFG-USBINPROT-NMEA 1              # Enable NMEA Input on UART1 (it won't expect/decode those messages)
+  RAM CFG-USBINPROT-NMEA 1              # Enable NMEA Input on USB (it won't expect/decode those messages)
 Flash CFG-USBINPROT-NMEA 1
-  RAM CFG-USBINPROT-UBX 1               # Enable UBX input on UART1
+  RAM CFG-USBINPROT-UBX 1               # Enable UBX input on USB
 Flash CFG-USBINPROT-UBX 1
-  RAM CFG-USBINPROT-RTCM3X 1            # Enable RTCM3X input on UART1
+  RAM CFG-USBINPROT-RTCM3X 1            # Enable RTCM3X input on USB
 Flash CFG-USBINPROT-RTCM3X 1
-  RAM CFG-USBOUTPROT-UBX 1              # Enable UBX output on UART1
+  RAM CFG-USBOUTPROT-UBX 1              # Enable UBX output on USB
 Flash CFG-USBOUTPROT-UBX 1
-  RAM CFG-USBOUTPROT-NMEA 1             # Enable NMEA output on UART1
+  RAM CFG-USBOUTPROT-NMEA 1             # Enable NMEA output on USB
 Flash CFG-USBOUTPROT-NMEA 1
-  RAM CFG-USBOUTPROT-RTCM3X 0           # Disable RTCM3 output on UART1
+  RAM CFG-USBOUTPROT-RTCM3X 0           # Disable RTCM3 output on USB
 Flash CFG-USBOUTPROT-RTCM3X 0
 
   RAM CFG-MSGOUT-UBX_NAV_PVT_USB 0x1                # Enables UBX_NAV_PVT messages on USB
 Flash CFG-MSGOUT-UBX_NAV_PVT_USB 0x1
-  RAM CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1                # Enables UBX_NAV_PVT messages on USB
+  RAM CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1               # Enables UBX_NAV_PVT messages on USB
 Flash CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1
+  RAM CFG-MSGOUT-UBX_RXM_RAWX_USB 0x1               # Enables UBX_NAV_PVT messages on USB
+Flash CFG-MSGOUT-UBX_RXM_RAWX_USB 0x1
+  RAM CFG-MSGOUT-UBX_NAV_SVIN_USB 0                 # Disable UBX_NAV_SVIN messages on USB
+Flash CFG-MSGOUT-UBX_NAV_SVIN_USB 0
