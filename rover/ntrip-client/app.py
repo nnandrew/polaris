@@ -33,11 +33,6 @@ from pyubx2 import (
     protocol,
     RTCM3_PROTOCOL
 )
-from maps import (
-    fixType_map,
-    gpsFixOk_map,
-    diffSoln_map
-)
 try:
     from common import gps_reader, ip_getter, u_center_config
 except ImportError:
@@ -85,7 +80,7 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
         refsep=0.0,
     )
     while not stop_event.is_set():
-        sleep(10)
+        sleep(1)
 
 def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
     """
@@ -108,25 +103,48 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
     org = "GPSSensorData"
     host = "https://us-east-1-1.aws.cloud2.influxdata.com"
     client = InfluxDBClient3(host=host, token=token, org=org)
+    msg_count = 0
+    last_queue_size_print = 0
+    
+    # Batch metrics for more efficient InfluxDB writes
+    metrics_batch = []
     while not stop_event.is_set():
-        if not gnss_rtcm_queue.empty():
-            try:
-                raw_data, _ = gnss_rtcm_queue.get()
-                if protocol(raw_data) == RTCM3_PROTOCOL:
-                    lock.acquire()
+        while not gnss_rtcm_queue.empty():
+            # Use get with timeout to avoid busy waiting
+            raw_data, _ = gnss_rtcm_queue.get(timeout=0.1)
+            
+            if protocol(raw_data) == RTCM3_PROTOCOL:
+                with lock:  # Using context manager for cleaner lock handling
                     gps.ser.write(raw_data)
-                    lock.release()
-                    print(f"{'rtcm_process_thread':<20}: Sent to GPS!")
-                    points = Point("metrics").tag("device", gps_type)
-                    points.field("ntrip_client_rtcm_recieved", True)
-                    client.write(database="GPS", record=points, write_precision="s")
-                else:
-                    print(f"{'rtcm_process_thread':<20}: Discarding non-RTCM3 data.")
-            except Exception as err:
-                print(f"{'rtcm_process_thread':<20}: {err}")
+                
+                msg_count += 1
+                metrics_batch.append(Point("metrics")
+                    .tag("device", gps_type)
+                    .field("ntrip_client_rtcm_recieved_int", 1))
+                
+                # Print queue size periodically
+                if msg_count - last_queue_size_print >= 10:
+                    print(f"{'rtcm_process_thread':<20}: Queue size: {gnss_rtcm_queue.qsize()}")
+                    last_queue_size_print = msg_count
+                
+                # Batch write to InfluxDB
+                if len(metrics_batch) >= 10:
+                    try:
+                        client.write(database="GPS", record=metrics_batch, write_precision="s")
+                        metrics_batch = []
+                    except Exception as err:
+                        print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
+            
             gnss_rtcm_queue.task_done()
-        sleep(1) # Prevent busy-waiting
-
+            
+        # Queue is empty, write any remaining metrics
+        if metrics_batch:
+            try:
+                client.write(database="GPS", record=metrics_batch, write_precision="s")
+                metrics_batch = []
+            except Exception as err:
+                print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
+            continue
 
 def influx_write(gps_type, parsed_data, client):
     """
@@ -171,7 +189,7 @@ def influx_write(gps_type, parsed_data, client):
 
     client.write(database="GPS", record=points, write_precision="s")
     print(f"{'influx_write':<20}: Wrote valid NAV-PVT data to InfluxDB.")
-    print(f'Carrier phase: {parsed_data.carrSoln}')
+    print(f"{'influx_write':<20}: Carrier phase: {parsed_data.carrSoln}")
 
 
 def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
@@ -206,11 +224,11 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                     # Attempt to re-initialize connections on error
                     client = InfluxDBClient3(host=host, token=token, org=org)
             elif parsed_data and parsed_data.identity == 'RXM-RTCM':
-                print(f'{'DEBUG':<20}: {parsed_data}')
+                print(f"{'read_messages_threadDEBUG':<20}: {parsed_data}")
             # elif parsed_data:
             #     print(f'IDK This data: {parsed_data}')
         except Exception as e:
-            print(f"\n\nSomething went wrong {e}\n\n")
+            print(f"\n{'read_messages_thread':<20}: Something went wrong {e}\n")
             continue
 
     client.close()
