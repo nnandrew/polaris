@@ -22,7 +22,7 @@ def read_messages(stream, lock, stop_event, ubx_reader, success_event):
     """
     # pylint: disable=unused-variable, broad-except
     while not stop_event.is_set():
-        if stream.in_waiting:
+        if stream.in_waiting and (not success_event.is_set()):
             try:
                 lock.acquire()
                 _, parsed_data = ubx_reader.read()
@@ -30,6 +30,7 @@ def read_messages(stream, lock, stop_event, ubx_reader, success_event):
                 if parsed_data and parsed_data.identity == 'ACK-ACK':
                     print(f'YIPPY: {parsed_data}')
                     success_event.set()
+                    # break
                 if parsed_data and parsed_data.identity == 'ACK-NAK':
                     print(f'ERROR: {parsed_data}')
             except Exception as err:
@@ -93,6 +94,7 @@ def send_config(ubx_msg, port):
         did_it_work = True
     else:
         print('Sad')
+        raise RuntimeError('Did not receive acknowledgement in time')
 
     print("\nStopping reader thread...\n")
     stop_event.set()

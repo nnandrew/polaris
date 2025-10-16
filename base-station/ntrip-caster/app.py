@@ -19,7 +19,10 @@ def main():
     """
     Initializes the GPS, gets the IP address, and starts the gnssserver.
     """
-    gps = gps_reader.SparkFun()
+    try:
+        gps = gps_reader.SparkFun()
+    except RuntimeError:
+        gps = gps_reader.SparkFunUART1()
     config_msg = u_center_config.convert_u_center_config('../BS_Config_Fixed.txt')
     u_center_config.send_config(config_msg, gps.ser)
     com = gps.port

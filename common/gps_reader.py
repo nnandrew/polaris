@@ -137,3 +137,21 @@ class SparkFun(Generic):
             pid=pid,
             baud=BAUD_RATE
         )
+
+class SparkFunUART1(Generic):
+    """A GPS reader specifically for the u-blox ZED-FP9 module."""
+
+    def __init__(self):
+        """Finds and opens a serial port for a SparkFun device through a UART to USB device.
+
+        This method identifies the SparkFun UART to USB device by its specific vendor and
+        product ID.
+        """
+        BAUD_RATE = 460800
+        vid = 6790
+        pid = 29987
+        super().__init__(
+            vid=vid,
+            pid=pid,
+            baud=BAUD_RATE
+        )

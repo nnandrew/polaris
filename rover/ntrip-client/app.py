@@ -275,7 +275,10 @@ def app():
             gps = gps_reader.Premium()
             config_msg = gps.get_config_msg()
         case "sparkfun":
-            gps = gps_reader.SparkFun()
+            try:
+                gps = gps_reader.SparkFun()
+            except RuntimeError:
+                gps = gps_reader.SparkFunUART1()
             config_msg = u_center_config.convert_u_center_config('../R_Config.txt')
             gnss_rtcm_queue = Queue()
             thread_pool.append(
