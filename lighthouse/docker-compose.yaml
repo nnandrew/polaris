@@ -46,7 +46,7 @@ services:
     volumes:
       - ./influxdb/data:/var/lib/influxdb3/data
       - ./influxdb/plugins:/var/lib/influxdb3/plugins
-      - ./influxdb/init.sh:/init.sh
+      - ./influxdb/entrypoint.sh:/entrypoint.sh
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     restart: unless-stopped
   nginx:

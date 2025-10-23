@@ -5,7 +5,7 @@ if [ ! -f /var/lib/influxdb3/tokens/admin-token.json ]; then
     mkdir -p /var/lib/influxdb3/tokens
     cat > /var/lib/influxdb3/tokens/admin-token.json <<EOF
 {
-  "token": "$INFLUX_TOKEN",
+  "token": "apiv3_$INFLUX_TOKEN",
   "name": "main-token",
   "expiry_millis": 1756400061529
 }
