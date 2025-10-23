@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name $LIGHTHOUSE_HOSTNAME;
+    server_name ${LIGHTHOUSE_HOSTNAME};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -12,11 +12,12 @@ server {
 }
 
 server {
-    listen 443 ssl http2;
-    server_name $LIGHTHOUSE_HOSTNAME;
+    listen 443 ssl;
+    http2 on;
+    server_name ${LIGHTHOUSE_HOSTNAME};
 
-    ssl_certificate /etc/letsencrypt/live/$LIGHTHOUSE_HOSTNAME/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$LIGHTHOUSE_HOSTNAME/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${LIGHTHOUSE_HOSTNAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${LIGHTHOUSE_HOSTNAME}/privkey.pem;
 
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
