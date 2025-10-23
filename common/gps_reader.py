@@ -3,8 +3,7 @@ from serial.tools.list_ports import comports
 from pyubx2 import (
     UBXMessage,
     UBXReader,
-    SET_LAYER_RAM,
-    TXN_NONE,
+    SET
 )
 
 receiver_by_pid = {
@@ -52,25 +51,20 @@ class GPSReader:
             UBXReader: A UBXReader instance for the configured serial port.
         """
         return UBXReader(self.ser)
-            
-    def get_nav_pvt_config(self, raw=False):
+
+    def get_nav_pvt_config(self):
         """
         Returns:
             UBXMessage: A UBXMessage to configure the receiver to output
-                        NAV-PVT and RAWX messages on USB.
+                        NAV-PVT messages on USB.
         """
-        cfgData = [
-            ("CFG_MSGOUT_UBX_NAV_PVT_USB", 0x1),
-        ]
-        if raw:
-            cfgData.extend([
-                ("CFG_MSGOUT_UBX_RXM_RAWX_USB", 0x1),
-                ("CFG_MSGOUT_UBX_RXM_SFRBX_USB", 0x1),        
-            ])
-        return UBXMessage.config_set(
-            layers=(SET_LAYER_RAM),
-            transaction=TXN_NONE,
-            cfgData=cfgData
+        return UBXMessage(
+            "CFG",
+            "CFG-MSG",
+            SET,
+            msgClass=0x01,     # NAV
+            msgID=0x07,        # PVT (Position Velocity Time Solution)
+            rateUSB=1,         # Enable on USB
         )
         
     def close_serial(self):

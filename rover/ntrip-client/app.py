@@ -16,6 +16,7 @@ for InfluxDB credentials. It is designed to be terminated with CTRL-C.
 """
 import os
 import dotenv
+import requests
 from queue import Queue
 from time import sleep
 from pygnssutils import GNSSNTRIPClient
@@ -26,7 +27,6 @@ from threading import (
     Lock
 )
 from influxdb_client_3 import (
-    InfluxDBClient3,
     Point
 )
 from pyubx2 import (
@@ -41,19 +41,32 @@ except ImportError:
     import gps_reader
     import ubx_config
 
-def get_influx_client():
+def influx_client_write(records):
     """
-    Creates and returns an InfluxDB client using environment variables.
-
-    Returns:
-        InfluxDBClient3: The configured InfluxDB client.
+    Attempts to write records to InfluxDB using line protocol.
+    
+    Args:
+        records: A single Point or a list of Points to write to InfluxDB.
     """
     dotenv.load_dotenv()
-    return InfluxDBClient3(
-        host=f"https://{os.getenv("LIGHTHOUSE_HOSTNAME")}/influx", 
-        token=os.getenv("LIGHTHOUSE_ADMIN_KEY"), 
-        org="polaris"
-    )
+    url = f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/influx/api/v3/write_lp?db=GPS&precision=second"
+    headers = {
+        "Authorization": f"Token {os.getenv('LIGHTHOUSE_ADMIN_PASSWORD')}",
+        "Content-Type": "text/plain; charset=utf-8"
+    }
+    try:
+        if type(records) is list:
+            payload = "\n".join([record.to_line_protocol() for record in records])
+        elif type(records) is Point:
+            payload = records.to_line_protocol()
+        else:
+            print(f"{'rtcm_process_thread':<20}: Invalid record type for InfluxDB write.")
+            return
+        response = requests.post(url, headers=headers, data=payload)
+        if response.status_code != 204:
+            print(f"{'rtcm_process_thread':<20}: Error writing: {response.status_code} - {response.text}")
+    except Exception as err:
+        print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
 
 def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     """
@@ -111,7 +124,6 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
         lock: To send data to the Serial
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
-    client = get_influx_client()
     msg_count = 0
     last_queue_size_print = 0
     
@@ -138,72 +150,22 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
                 
                 # Batch write to InfluxDB
                 if len(metrics_batch) >= 10:
-                    try:
-                        client.write(database="GPS", record=metrics_batch, write_precision="s")
-                        metrics_batch = []
-                    except Exception as err:
-                        print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
-            
+                    influx_client_write(metrics_batch)
+    
             gnss_rtcm_queue.task_done()
             
         # Queue is empty, write any remaining metrics
         if metrics_batch:
-            try:
-                client.write(database="GPS", record=metrics_batch, write_precision="s")
-                metrics_batch = []
-            except Exception as err:
-                print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
-            continue
+            influx_client_write(metrics_batch)
 
-def influx_write(gps_type, parsed_data, client):
+def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
     """
     Reads parsed UBX NAV-PVT data from the GPS and writes it to InfluxDB.
 
     This function continuously reads from the GPS device. When a `NAV-PVT`
     (Position, Velocity, Time) message is received, it extracts key metrics,
     formats them as a data point, and writes them to the InfluxDB "GPS"
-    database.
-
-    Args:
-        gps_type (str): The type of GPS device (e.g., "sparkfun").
-        parsed_data: Data to send to InfluxDB.
-        client (InfluxDBClient): The InfluxDB client.
-    """
-    points = Point("metrics").tag("device", gps_type)
-
-    if parsed_data.gnssFixOk:
-        points.field("latitude", parsed_data.lat) \
-              .field("longitude", parsed_data.lon) \
-              .field("altitude_m", parsed_data.hMSL/1000) \
-              .field("ground_speed_ms", parsed_data.gSpeed / 1000) \
-              .field("ground_heading_deg", parsed_data.headMot) \
-              .field("horizontal_accuracy_m", parsed_data.hAcc/1000) \
-              .field("vertical_accuracy_m", parsed_data.vAcc/1000) \
-              .field("speed_accuracy_ms", parsed_data.sAcc/1000) \
-              .field("heading_accuracy_deg", parsed_data.headAcc)
-        print(f"{'influx_write':<20}: Latitude: {parsed_data.lat}")
-        print(f"{'influx_write':<20}: Longitude: {parsed_data.lon}")
-    # Log fix type and status
-    points.field("fix_type_int", int(parsed_data.fixType)) \
-            .field("fix_ok_int", int(parsed_data.gnssFixOk)) \
-            .field('carrier_phase_range_int', int(parsed_data.carrSoln))
-
-    if parsed_data.validTime and parsed_data.validDate:
-        dt = datetime(
-            year=parsed_data.year, month=parsed_data.month, day=parsed_data.day,
-            hour=parsed_data.hour, minute=parsed_data.min, second=parsed_data.second,
-            tzinfo=timezone.utc
-        )
-        points.time(int(dt.timestamp() * 1e9))
-
-    client.write(database="GPS", record=points, write_precision="s")
-    print(f"{'influx_write':<20}: Wrote valid NAV-PVT data to InfluxDB.")
-    print(f"{'influx_write':<20}: Carrier phase: {parsed_data.carrSoln}")
-
-
-def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
-    """
-    Reads, parses and prints out incoming UBX messages
+    database using line protocol.
 
     Args:
         stop_event (threading.Event): Event to stop reading messages
@@ -214,7 +176,6 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
     # pylint: disable=unused-variable, broad-except
 
     print(f"{'read_messages_thread':<20}: Starting...")
-    client = get_influx_client()
 
     while not stop_event.is_set():
         try:
@@ -223,11 +184,37 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
             lock.release()
             if parsed_data and parsed_data.identity == 'NAV-PVT':
                 try:
-                    influx_write(gps_type, parsed_data, client)
+                    point = Point("metrics").tag("device", gps_type)
+
+                    if parsed_data.gnssFixOk:
+                        point.field("latitude", parsed_data.lat) \
+                            .field("longitude", parsed_data.lon) \
+                            .field("altitude_m", parsed_data.hMSL/1000) \
+                            .field("ground_speed_ms", parsed_data.gSpeed / 1000) \
+                            .field("ground_heading_deg", parsed_data.headMot) \
+                            .field("horizontal_accuracy_m", parsed_data.hAcc/1000) \
+                            .field("vertical_accuracy_m", parsed_data.vAcc/1000) \
+                            .field("speed_accuracy_ms", parsed_data.sAcc/1000) \
+                            .field("heading_accuracy_deg", parsed_data.headAcc)
+                        print(f"{'read_messages_thread':<20}: Latitude: {parsed_data.lat}")
+                        print(f"{'read_messages_thread':<20}: Longitude: {parsed_data.lon}")
+                    
+                    point.field("fix_type_int", int(parsed_data.fixType)) \
+                        .field("fix_ok_int", int(parsed_data.gnssFixOk)) \
+                        .field('carrier_phase_range_int', int(parsed_data.carrSoln))
+
+                    # Use provided timestamp if available
+                    if parsed_data.validTime and parsed_data.validDate:
+                        dt = datetime(
+                            year=parsed_data.year, month=parsed_data.month, day=parsed_data.day,
+                            hour=parsed_data.hour, minute=parsed_data.min, second=parsed_data.second,
+                            tzinfo=timezone.utc
+                        )
+                        point.time(int(dt.timestamp()))
+
+                    influx_client_write(point)
                 except Exception as e:
                     print(f"{'read_messages_thread':<20}: Error: {e}. Re-initializing...")
-                    # Attempt to re-initialize connections on error
-                    client = get_influx_client()
             elif parsed_data and parsed_data.identity == 'RXM-RTCM':
                 print(f"{'read_messages_threadDEBUG':<20}: {parsed_data}")
             # elif parsed_data:
@@ -235,9 +222,6 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
         except Exception as e:
             print(f"\n{'read_messages_thread':<20}: Something went wrong {e}\n")
             continue
-
-    client.close()
-
 
 def get_current_utc_time():
     current_time = datetime.now(timezone.utc)
@@ -316,10 +300,10 @@ def app():
     try:
         nar = ubx_config.send_config(config_msg, gps.ser)
         if not nar:
-            print('ERROR writing config')
+            print('ERROR: Failed to write config')
             return
     except Exception as e:
-        print(f'Unexpected Error when writing config: {e}')
+        print(f'ERROR: Unexpected Error when writing config: {e}')
         return
 
     # Start the threads

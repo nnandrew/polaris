@@ -86,10 +86,9 @@ def send_config(ubx_msg, port):
     # Validate the msg was acknowledged
     print("\nConfig Message was sent. Waiting for acknowledgement...\n")
     sleep(1) # At most an ACK message will be sent 1 second after
-    did_it_work = False
+    success = False
     if success_event.is_set():
-        print('Yippy')
-        did_it_work = True
+        success = True
     else:
         print('Sad')
         raise RuntimeError('Did not receive acknowledgement in time')
@@ -99,7 +98,7 @@ def send_config(ubx_msg, port):
     read_thread.join()
     print("\nProcessing Complete")
 
-    return did_it_work
+    return success
 
 
 def signed_16(value):

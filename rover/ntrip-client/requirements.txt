@@ -1,8 +1,9 @@
+dotenv
+influxdb3-python
+numpy
+pygpsclient
 pygnssutils
 pyrtcm
-pyubx2
 pyserial
-numpy
-influxdb3-python
-dotenv
-pygpsclient
+pyubx2
+requests
