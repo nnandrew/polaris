@@ -7,7 +7,7 @@ services:
       - ./shared:/home/ntrip-caster
       - ../common:/common
     devices:
-      - "/dev/ttyACM0:/dev/ttyACM0"  # GNSS Receiver, may need to change based on your device
+      - "${GNSS_DEVICE_FILE}:${GNSS_DEVICE_FILE}"  # GNSS Receiver
     ports:
       - "2101:2101" # NTRIP
     restart: unless-stopped
@@ -17,8 +17,8 @@ services:
     container_name: enrollment-client
     environment: 
       - LIGHTHOUSE_GROUP_NAME=base_station
-      - LIGHTHOUSE_PUBLIC_IP=${LIGHTHOUSE_PUBLIC_IP}
-      - LIGHTHOUSE_NETWORK_KEY=${LIGHTHOUSE_NETWORK_KEY}
+      - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}
+      - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
     volumes:
       - ./shared:/home/enrollment-client/shared
     ports:

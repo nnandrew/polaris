@@ -295,7 +295,7 @@
         ]
       },
       "gridPos": {
-        "h": 16,
+        "h": 20,
         "w": 8,
         "x": 16,
         "y": 1
@@ -852,136 +852,6 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "dark-red",
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 50,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "linearThreshold": 0.125,
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "RTCM Processing"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "C"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "NTRIP Transmission"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 16,
-        "x": 0,
-        "y": 17
-      },
-      "id": 17,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "hide": false,
-          "queryType": "randomWalk",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "hide": false,
-          "queryType": "randomWalk",
-          "refId": "C"
-        }
-      ],
-      "title": "Latency (Age of RTCM)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
         "type": "influxdb",
         "uid": "P07ECAE0F45840A9F"
       },
@@ -1025,7 +895,7 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 16,
+        "x": 0,
         "y": 17
       },
       "id": 13,
@@ -1145,7 +1015,7 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 20,
+        "x": 4,
         "y": 17
       },
       "id": 27,
@@ -1215,23 +1085,18 @@
           "mappings": [
             {
               "options": {
-                "match": "null+nan",
-                "result": {
+                "0": {
+                  "color": "red",
                   "index": 0,
                   "text": "No RTCM"
-                }
-              },
-              "type": "special"
-            },
-            {
-              "options": {
-                "match": "true",
-                "result": {
+                },
+                "1": {
+                  "color": "green",
                   "index": 1,
                   "text": "RTCM Received"
                 }
               },
-              "type": "special"
+              "type": "value"
             }
           ],
           "min": 0,
@@ -1251,8 +1116,8 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 16,
-        "y": 21
+        "x": 8,
+        "y": 17
       },
       "id": 28,
       "options": {
@@ -1265,7 +1130,7 @@
           "calcs": [
             "last"
           ],
-          "fields": "/^ntrip_client_rtcm_recieved$/",
+          "fields": "/^ntrip_client_rtcm_recieved_int$/",
           "values": false
         },
         "showPercentChange": false,
@@ -1283,7 +1148,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ntrip_client_rtcm_recieved\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND ntrip_client_rtcm_recieved IS NOT NULL\nORDER BY\n  time\n",
+          "rawSql": "SELECT\n  ntrip_client_rtcm_recieved_int\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND ntrip_client_rtcm_recieved_int IS NOT NULL\nORDER BY\n  time\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1327,9 +1192,14 @@
                   "text": "No RTK"
                 },
                 "1": {
-                  "color": "green",
+                  "color": "yellow",
                   "index": 1,
-                  "text": "RTK Applied"
+                  "text": "RTK Float"
+                },
+                "2": {
+                  "color": "green",
+                  "index": 2,
+                  "text": "RTK Fixed"
                 }
               },
               "type": "value"
@@ -1351,8 +1221,8 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 20,
-        "y": 21
+        "x": 12,
+        "y": 17
       },
       "id": 26,
       "options": {
@@ -1383,7 +1253,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  differential_solution_int\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND differential_solution_int IS NOT NULL\nORDER BY\n  time\n",
+          "rawSql": "SELECT\n  carrier_phase_range_int\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND carrier_phase_range_int IS NOT NULL\nORDER BY\n  time\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1412,7 +1282,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 21
       },
       "id": 8,
       "panels": [],
@@ -1509,7 +1379,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 26
+        "y": 22
       },
       "id": 10,
       "options": {
@@ -1592,7 +1462,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 26
+        "y": 22
       },
       "id": 20,
       "options": {
@@ -1670,7 +1540,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 26
+        "y": 22
       },
       "id": 16,
       "options": {
@@ -1748,7 +1618,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 30
+        "y": 26
       },
       "id": 15,
       "options": {
@@ -1886,7 +1756,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 34
+        "y": 30
       },
       "id": 24,
       "options": {
@@ -1967,7 +1837,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 34
+        "y": 30
       },
       "id": 21,
       "options": {
@@ -2098,7 +1968,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 38
       },
       "id": 23,
       "panels": [],
@@ -2183,7 +2053,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 39
       },
       "id": 22,
       "options": {
@@ -2292,7 +2162,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 39
       },
       "id": 25,
       "options": {
@@ -2325,15 +2195,15 @@
     }
   ],
   "preload": false,
-  "refresh": "",
+  "refresh": "1s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2025-10-03T01:52:36.000Z",
-    "to": "2025-10-03T01:53:36.000Z"
+    "from": "now-1m",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -2352,5 +2222,5 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "deiu8hvipbo5cb",
-  "version": 2
+  "version": 5
 }

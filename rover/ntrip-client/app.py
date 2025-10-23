@@ -41,6 +41,20 @@ except ImportError:
     import gps_reader
     import ubx_config
 
+def get_influx_client():
+    """
+    Creates and returns an InfluxDB client using environment variables.
+
+    Returns:
+        InfluxDBClient3: The configured InfluxDB client.
+    """
+    dotenv.load_dotenv()
+    return InfluxDBClient3(
+        host=f"https://{os.getenv("LIGHTHOUSE_HOSTNAME")}/influx", 
+        token=os.getenv("LIGHTHOUSE_ADMIN_KEY"), 
+        org="polaris"
+    )
+
 def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     """
     Connects to an NTRIP caster and streams RTCM data into a queue.
@@ -97,11 +111,7 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
         lock: To send data to the Serial
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
-    dotenv.load_dotenv()
-    token = os.getenv("INFLUXDB_TOKEN")
-    org = "GPSSensorData"
-    host = "https://us-east-1-1.aws.cloud2.influxdata.com"
-    client = InfluxDBClient3(host=host, token=token, org=org)
+    client = get_influx_client()
     msg_count = 0
     last_queue_size_print = 0
     
@@ -204,8 +214,7 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
     # pylint: disable=unused-variable, broad-except
 
     print(f"{'read_messages_thread':<20}: Starting...")
-    dotenv.load_dotenv()
-    client = InfluxDBClient3(host=os.getenv("INFLUXDB_URL"), token=os.getenv("INFLUXDB_TOKEN"), org="GPSSensorData")
+    client = get_influx_client()
 
     while not stop_event.is_set():
         try:
@@ -218,7 +227,7 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                 except Exception as e:
                     print(f"{'read_messages_thread':<20}: Error: {e}. Re-initializing...")
                     # Attempt to re-initialize connections on error
-                    client = InfluxDBClient3(host=os.getenv("INFLUXDB_URL"), token=os.getenv("INFLUXDB_TOKEN"), org="GPSSensorData")
+                    client = get_influx_client()
             elif parsed_data and parsed_data.identity == 'RXM-RTCM':
                 print(f"{'read_messages_threadDEBUG':<20}: {parsed_data}")
             # elif parsed_data:

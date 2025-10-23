@@ -1,23 +1,24 @@
 services:
   ntrip-client:
     build: ./ntrip-client
-    # image: polaris/ntrip-client:latest
+    # image: polaris/ntrip-client:latest # FOR FINAL DELIVERABLE
     container_name: ntrip-client
-    env_file:
-     - .env
+    environment: 
+      - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}
+      - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
     devices:
-      - "/dev/ttyACM0:/dev/ttyACM0"  # GNSS Receiver
+      - "${GNSS_DEVICE_FILE}:${GNSS_DEVICE_FILE}"  # GNSS Receiver
     ports:
       - "2101:2101"   # NTRIP
     restart: unless-stopped
   enrollment-client:
     build: ../common/enrollment-client
-    # image: polaris/enrollment-client:latest
+    # image: polaris/enrollment-client:latest # FOR FINAL DELIVERABLE
     container_name: enrollment-client
     environment: 
       - LIGHTHOUSE_GROUP_NAME=rover
-      - LIGHTHOUSE_PUBLIC_IP=${LIGHTHOUSE_PUBLIC_IP}
-      - LIGHTHOUSE_NETWORK_KEY=${LIGHTHOUSE_NETWORK_KEY}
+      - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}
+      - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
     volumes:
       - ./shared:/home/enrollment-client/shared
     ports:

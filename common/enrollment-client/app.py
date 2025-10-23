@@ -33,15 +33,15 @@ if __name__ == '__main__':
     
     # Load Environment Variables
     dotenv.load_dotenv()
-    LIGHTHOUSE_NETWORK_KEY = os.getenv("LIGHTHOUSE_NETWORK_KEY")
-    LIGHTHOUSE_PUBLIC_IP = os.getenv("LIGHTHOUSE_PUBLIC_IP")
+    LIGHTHOUSE_ADMIN_PASSWORD = os.getenv("LIGHTHOUSE_ADMIN_PASSWORD")
+    LIGHTHOUSE_HOSTNAME = os.getenv("LIGHTHOUSE_HOSTNAME")
     LIGHTHOUSE_GROUP_NAME = os.getenv("LIGHTHOUSE_GROUP_NAME")
     logging.info("Environment Variables Loaded.")
     
     # Attempt Enrollment
-    url = f"http://{LIGHTHOUSE_PUBLIC_IP}/api/enroll"
+    url = f"https://{LIGHTHOUSE_HOSTNAME}/api/enroll"
     params = {
-        "network_key": LIGHTHOUSE_NETWORK_KEY,
+        "network_key": LIGHTHOUSE_ADMIN_PASSWORD,
         "group_name": LIGHTHOUSE_GROUP_NAME
     }
     config_path = "./shared/config.yml"
