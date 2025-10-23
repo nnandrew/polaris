@@ -6,25 +6,21 @@ starts the `gnssserver` process to broadcast GNSS data as an NTRIP caster.
 """
 import subprocess
 try:
-    from common import gps_reader, ip_getter, u_center_config
+    from common import gps_reader, ubx_config
 except ImportError:
     import os
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
     import gps_reader
-    import ip_getter
-    import u_center_config
+    import ubx_config
 
 def main():
     """
     Initializes the GPS, gets the IP address, and starts the gnssserver.
     """
-    try:
-        gps = gps_reader.SparkFun()
-    except RuntimeError:
-        gps = gps_reader.SparkFunUART1()
-    config_msg = u_center_config.convert_u_center_config('../BS_Config_Fixed.txt')
-    u_center_config.send_config(config_msg, gps.ser)
+    gps = gps_reader.GPSReader()
+    config_msg = ubx_config.convert_u_center_config('BS_Config.txt')
+    ubx_config.send_config(config_msg, gps.ser)
     com = gps.port
     gps.close_serial()
     # Binds to all available interfaces

@@ -7,10 +7,8 @@ from pyubx2 import (
     ATTTYPE,
     atttyp,
     UBX_CONFIG_DATABASE,
-    SET,
     UBX_PROTOCOL,
     UBXReader,
-    POLL_LAYER_RAM
 )
 from threading import Event, Lock, Thread
 from time import sleep
@@ -124,12 +122,14 @@ def convert_u_center_config(config_file) -> object:
             if striped_line.startswith('#'):
                 continue
             split_line = striped_line.split()
-            if  split_line:
-                if split_line[0] == 'Flash':
+            if split_line:
+                layer = split_line[0]
+                # Only process Flash layer for now
+                if layer == 'Flash':
                     ubx_id = split_line[1].replace('-', '_') # ID's must use _
-                    (key, att) = UBX_CONFIG_DATABASE[ubx_id] # Get the attribute string name
-                    att_final = ATTTYPE[atttyp(att)] # Get the class of attribute
-                    if att_final is bytes:
+                    (key, ubx_attribute_type) = UBX_CONFIG_DATABASE[ubx_id] # Get the attribute string name
+                    attribute_type = ATTTYPE[atttyp(ubx_attribute_type)] # Get the class of attribute
+                    if attribute_type is bytes:
                         temp_msg = (ubx_id, int(split_line[2], 0).to_bytes()) # Must convert to bytes if ID requires it
                     elif ubx_id == 'CFG_TMODE_LON':
                         temp_msg = (ubx_id, signed_16(split_line[2])) # Negative numbers in hex work weird
@@ -148,7 +148,7 @@ def convert_u_center_config(config_file) -> object:
 if __name__ == '__main__':
     # Some Default Testing
     serial = serial.Serial('COM3', 9600)
-    config = '../base-station/BS_Config_Fixed.txt'
+    config = '../base-station/ntrip-caster/BS_Config.txt'
     msg = convert_u_center_config(config)
     send_config(msg, serial)
     serial.close()

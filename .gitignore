@@ -1,7 +1,8 @@
 .env
-shared/
-data/
-__pycache__
 .idea/
 .venv/
-nebula
+.vscode/
+data/
+nebula/
+shared/
+__pycache__/

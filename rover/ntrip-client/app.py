@@ -34,13 +34,12 @@ from pyubx2 import (
     RTCM3_PROTOCOL
 )
 try:
-    from common import gps_reader, ip_getter, u_center_config
+    from common import gps_reader, ubx_config
 except ImportError:
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
     import gps_reader
-    import ip_getter
-    import u_center_config
+    import ubx_config
 
 def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     """
@@ -92,7 +91,7 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
 
     Args:
         gnss_rtcm_queue (Queue): The queue from which to get RTCM data.
-        gps (gps_reader.Generic): The GPS reader instance with an open serial port.
+        gps (gps_reader.GPSReader): The GPS reader instance with an open serial port.
         stop_event (Event): A threading event to signal when to stop.
         gps_type (str): The type of GPS device (e.g., "sparkfun").
         lock: To send data to the Serial
@@ -206,10 +205,7 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
 
     print(f"{'read_messages_thread':<20}: Starting...")
     dotenv.load_dotenv()
-    token = os.getenv("INFLUXDB_TOKEN")
-    org = "GPSSensorData"
-    host = "https://us-east-1-1.aws.cloud2.influxdata.com"
-    client = InfluxDBClient3(host=host, token=token, org=org)
+    client = InfluxDBClient3(host=os.getenv("INFLUXDB_URL"), token=os.getenv("INFLUXDB_TOKEN"), org="GPSSensorData")
 
     while not stop_event.is_set():
         try:
@@ -222,7 +218,7 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                 except Exception as e:
                     print(f"{'read_messages_thread':<20}: Error: {e}. Re-initializing...")
                     # Attempt to re-initialize connections on error
-                    client = InfluxDBClient3(host=host, token=token, org=org)
+                    client = InfluxDBClient3(host=os.getenv("INFLUXDB_URL"), token=os.getenv("INFLUXDB_TOKEN"), org="GPSSensorData")
             elif parsed_data and parsed_data.identity == 'RXM-RTCM':
                 print(f"{'read_messages_threadDEBUG':<20}: {parsed_data}")
             # elif parsed_data:
@@ -265,21 +261,15 @@ def app():
     lock = Lock()
 
     # Configure GPS type
-    GPS_TYPE = "sparkfun"
-    config_msg = None
-    match GPS_TYPE:
-        case "budget":
-            gps = gps_reader.Budget()
-            config_msg = gps.get_config_msg()
-        case "premium":
-            gps = gps_reader.Premium()
-            config_msg = gps.get_config_msg()
-        case "sparkfun":
-            try:
-                gps = gps_reader.SparkFun()
-            except RuntimeError:
-                gps = gps_reader.SparkFunUART1()
-            config_msg = u_center_config.convert_u_center_config('../R_Config.txt')
+    gps = gps_reader.GPSReader()
+    gps_type = gps.gps_type
+    match gps_type:
+        case "BUDGET":
+            config_msg = gps.get_nav_pvt_config()
+        case "PREMIUM":
+            config_msg = gps.get_nav_pvt_config(raw=True)
+        case "SPARKFUN":
+            config_msg = ubx_config.convert_u_center_config('R_Config.txt')
             gnss_rtcm_queue = Queue()
             thread_pool.append(
                 Thread(
@@ -291,17 +281,18 @@ def app():
             thread_pool.append(
                 Thread(
                     target=rtcm_process_thread,
-                    args=(gnss_rtcm_queue, gps, stop_event, GPS_TYPE, lock),
+                    args=(gnss_rtcm_queue, gps, stop_event, gps_type, lock),
                     daemon=True
                 )
             )
-
+            
     thread_pool.append(
         Thread(
             target=read_messages_thread,
-            args=(stop_event, gps.get_reader(), GPS_TYPE, lock),
+            args=(stop_event, gps.get_reader(), gps_type, lock),
         )
     )
+    
     # Uncomment Below to include a stopwatch in the CLI that will show the
     # start and stop UTC time along with the total seconds.
     # thread_pool.append(
@@ -314,7 +305,7 @@ def app():
 
     # Configure the receiver
     try:
-        nar= u_center_config.send_config(config_msg, gps.ser)
+        nar = ubx_config.send_config(config_msg, gps.ser)
         if not nar:
             print('ERROR writing config')
             return
@@ -325,24 +316,24 @@ def app():
     # Start the threads
     for t in thread_pool:
         t.start()
-
     print(f"{'main_thread':<20}: Threads started, press CTRL-C to terminate...")
     
+    # Main loop - wait for CTRL-C
     try:
         while not stop_event.is_set():
             sleep(1)
-            
     except (KeyboardInterrupt, SystemExit):
         stop_event.set()
         print(f"\n{'main_thread':<20}: Termination signal received, shutting down threads...")
 
+    # Wait for all threads to finish
     for t in thread_pool:
         t.join()
-
-    gps.close_serial()
-
     print(f"{'main_thread':<20}: All threads have finished.")
+
+    # Close the GPS serial connection
+    gps.close_serial()
+    print(f"{'main_thread':<20}: NTRIP Client terminated.")
 
 if __name__ == "__main__":
     app()
-    print(f"{'main_thread':<20}: NTRIP Client terminated.")

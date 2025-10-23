@@ -5,3 +5,4 @@ pyserial
 numpy
 influxdb3-python
 dotenv
+pygpsclient
