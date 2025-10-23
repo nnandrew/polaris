@@ -22,7 +22,7 @@ def enroll():
     """
     Handles node enrollment requests via API (GET) and admin panel (POST).
 
-    GET: Requires 'LIGHTHOUSE_NETWORK_KEY' and 'group_name' as query parameters.
+    GET: Requires 'LIGHTHOUSE_ADMIN_PASSWORD' and 'group_name' as query parameters.
     POST: Requires admin session and 'group_name' as form data.
 
     Returns:
@@ -30,14 +30,14 @@ def enroll():
     """
     if flask.request.method == 'GET':
         # API enrollment
-        network_key = flask.request.args.get('LIGHTHOUSE_NETWORK_KEY')
-        if not network_key or network_key != flask.current_app.config.get("LIGHTHOUSE_NETWORK_KEY"):
+        network_key = flask.request.args.get('LIGHTHOUSE_ADMIN_PASSWORD')
+        if not network_key or network_key != flask.current_app.config.get("LIGHTHOUSE_ADMIN_PASSWORD"):
             return "Unauthorized", 401
         group_name = flask.request.args.get('group_name')
         if not group_name:
             return "Missing group_name", 400
         ip_octet = None
-        host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
+        host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'), ip_octet)
         if host_id is None:
             return "Enrollment failed", 400
         return flask.redirect(flask.url_for('main.download_config', host_id=host_id))
@@ -54,7 +54,7 @@ def enroll():
         ip_octet = int(ip_octet)
         if ip_octet < 2 or ip_octet > 254:
             return flask.redirect(flask.url_for('main.admin'))
-        nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_PUBLIC_IP'), ip_octet)
+        nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'), ip_octet)
         return flask.redirect(flask.url_for('main.admin'))
 
 @main_bp.route('/api/ntrip', methods=['GET'])
@@ -100,7 +100,7 @@ def login():
     Handles admin login. Sets session if password matches network key.
     """
     password = flask.request.form.get('password')
-    if password == flask.current_app.config.get("LIGHTHOUSE_NETWORK_KEY"):
+    if password == flask.current_app.config.get("LIGHTHOUSE_ADMIN_PASSWORD"):
         flask.session['logged_in'] = True
     else:
         return flask.render_template('admin.html', error='Invalid password')

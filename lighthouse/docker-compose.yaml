@@ -37,19 +37,17 @@ services:
     depends_on:
       - influxdb
   influxdb:
-    image: influxdb:2.7
+    image: influxdb:3-core
     container_name: influxdb
     environment:
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=${LIGHTHOUSE_ADMIN_USER}
-      - DOCKER_INFLUXDB_INIT_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${LIGHTHOUSE_ADMIN_PASSWORD}
-      - DOCKER_INFLUXDB_INIT_ORG=polaris
-      - DOCKER_INFLUXDB_INIT_BUCKET=metrics
+      - INFLUX_TOKEN=${LIGHTHOUSE_ADMIN_PASSWORD}
     ports:
-      - "8086:8086"
+      - "8181:8181"
     volumes:
-      - ./influxdb/data:/var/lib/influxdb2
+      - ./influxdb/data:/var/lib/influxdb3/data
+      - ./influxdb/plugins:/var/lib/influxdb3/plugins
+      - ./influxdb/init.sh:/init.sh
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     restart: unless-stopped
   nginx:
     image: nginx:alpine

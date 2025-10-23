@@ -3,11 +3,10 @@ datasources:
   - name: influxdb
     type: influxdb
     access: proxy
-    url: http://influxdb:8086
+    url: ${INFLUXDB_HOST}
     jsonData:
       version: SQL
-      organization: "polaris"
-      defaultBucket: "metrics"
+      dbName: GPS
       httpMode: POST
       insecureGrpc: false
     secureJsonData:
