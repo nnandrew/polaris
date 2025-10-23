@@ -16,7 +16,19 @@ import serial
 
 def read_messages(stream, lock, stop_event, ubx_reader, success_event):
     """
-    Reads, parses and prints out incoming UBX messages
+    Reads, parses and prints out incoming UBX messages.
+
+    This function runs in a loop and continuously reads from the serial stream.
+    It looks for UBX-ACK-ACK messages to confirm that the configuration was
+    successfully applied. If an ACK is received, it sets the `success_event`.
+    If a NAK is received, it indicates an error.
+
+    Args:
+        stream (Serial): The serial stream to read from.
+        lock (Lock): A mutex to ensure thread-safe access to the serial stream.
+        stop_event (Event): A threading event to signal when to stop.
+        ubx_reader (UBXReader): The UBXReader instance for parsing messages.
+        success_event (Event): A threading event to signal a successful ACK.
     """
     # pylint: disable=unused-variable, broad-except
     while not stop_event.is_set():
@@ -26,9 +38,8 @@ def read_messages(stream, lock, stop_event, ubx_reader, success_event):
                 _, parsed_data = ubx_reader.read()
                 lock.release()
                 if parsed_data and parsed_data.identity == 'ACK-ACK':
-                    print(f'YIPPY: {parsed_data}')
+                    print(f'SUCCESS: {parsed_data}')
                     success_event.set()
-                    # break
                 if parsed_data and parsed_data.identity == 'ACK-NAK':
                     print(f'ERROR: {parsed_data}')
             except Exception as err:
@@ -38,7 +49,17 @@ def read_messages(stream, lock, stop_event, ubx_reader, success_event):
 
 def start_thread(stream, lock, stop_event, ubx_reader, success_event):
     """
-    Start read thread
+    Starts the message reading thread.
+
+    Args:
+        stream (Serial): The serial stream to read from.
+        lock (Lock): A mutex for thread-safe serial access.
+        stop_event (Event): An event to signal the thread to stop.
+        ubx_reader (UBXReader): The UBXReader instance for parsing messages.
+        success_event (Event): An event to signal a successful ACK.
+
+    Returns:
+        Thread: The started thread instance.
     """
 
     thr = Thread(
@@ -50,7 +71,12 @@ def start_thread(stream, lock, stop_event, ubx_reader, success_event):
 
 def send_message(stream, lock, message):
     """
-    Send message to device
+    Sends a message to the device.
+
+    Args:
+        stream (Serial): The serial stream to write to.
+        lock (Lock): A mutex for thread-safe serial access.
+        message (UBXMessage): The message to send.
     """
 
     lock.acquire()
@@ -59,16 +85,23 @@ def send_message(stream, lock, message):
 
 def send_config(ubx_msg, port):
     """
-    A helper function to send a UBX-CFG message
+    A helper function to send a UBX-CFG message and verify acknowledgement.
 
-    It will send the message to the passed port, and verity a UBX-ACK-ACK message is received.
+    It will send the message to the passed port, and verify a UBX-ACK-ACK
+    message is received within a 1-second timeout.
 
     Args:
-        ubx_msg (Object): The UBX-CFG message to be sent.
-        port: The serial port to send the message to.
+        ubx_msg (UBXMessage): The UBX-CFG message to be sent.
+        port (Serial): The serial port to send the message to.
+
+    Returns:
+        bool: True if the message was acknowledged, False otherwise.
+
+    Raises:
+        RuntimeError: If no acknowledgement is received within the timeout.
     """
 
-    # create UBXReader instance, reading only UBX messages
+    # Create a UBXReader instance, reading only UBX messages.
     ubr = UBXReader(port, protfilter=UBX_PROTOCOL)
 
     print("\nStarting read thread...\n")
@@ -79,13 +112,13 @@ def send_config(ubx_msg, port):
     success_event.clear()
     read_thread = start_thread(port, serial_lock, stop_event, ubr, success_event)
 
-    # send the msg
+    # Send the configuration message.
     print("\nSending Config Message...\n")
     send_message(port, serial_lock, ubx_msg)
 
-    # Validate the msg was acknowledged
+    # Wait for acknowledgement.
     print("\nConfig Message was sent. Waiting for acknowledgement...\n")
-    sleep(1) # At most an ACK message will be sent 1 second after
+    sleep(1) # An ACK message should be received within 1 second.
     success = False
     if success_event.is_set():
         success = True
@@ -102,19 +135,35 @@ def send_config(ubx_msg, port):
 
 
 def signed_16(value):
+    """
+    Converts a 16-bit hexadecimal string to a signed integer.
+
+    Args:
+        value (str): The hexadecimal string to convert.
+
+    Returns:
+        int: The signed integer representation of the hexadecimal value.
+    """
     value = int(value, base=16)
     return -(value & 0x8000000000000000) | (value & 0x7fffffffffffffff)
 
 
 def convert_u_center_config(config_file) -> object:
     """
-    Function to convert U-Center Config (.txt) files to a pyubx2.UBXMessage.
+    Converts a u-center configuration file (.txt) to a pyubx2 UBXMessage.
 
-    Doing so allows for the file to be sent to an u-blocks receiver.
+    This allows a configuration generated by the u-center software to be
+    programmatically sent to a u-blox receiver.
+
+    Args:
+        config_file (str): The path to the u-center configuration file.
+
+    Returns:
+        UBXMessage: A UBX-CFG-VALSET message containing the configuration data.
     """
     cfg_data = []
 
-    # Converting U-Center Config File to Bit representation using pyubx2.UBXMessage
+    # Parse the u-center config file line by line.
     with (open(config_file, 'r') as file):
         for line in file:
             striped_line = line.strip()
@@ -136,6 +185,7 @@ def convert_u_center_config(config_file) -> object:
                         temp_msg = (ubx_id, int(split_line[2], 0))
                     cfg_data.append(temp_msg)
 
+    # Create a UBX-CFG-VALSET message with the parsed configuration data.
     msg = UBXMessage.config_set(
         layers=(SET_LAYER_RAM | SET_LAYER_FLASH | SET_LAYER_BBR),
         transaction=TXN_NONE,
@@ -145,9 +195,9 @@ def convert_u_center_config(config_file) -> object:
     return msg
 
 if __name__ == '__main__':
-    # Some Default Testing
-    serial = serial.Serial('COM3', 9600)
-    config = '../base-station/ntrip-caster/BS_Config.txt'
-    msg = convert_u_center_config(config)
-    send_config(msg, serial)
-    serial.close()
+    # Default testing for the module.
+    serial_port = serial.Serial('COM3', 9600)
+    config_path = '../base-station/ntrip-caster/BS_Config.txt'
+    message = convert_u_center_config(config_path)
+    send_config(message, serial_port)
+    serial_port.close()

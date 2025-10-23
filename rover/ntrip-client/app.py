@@ -6,13 +6,15 @@ correction data, applies it to a local GPS device, and logs the resulting
 high-precision location data to an InfluxDB database.
 
 The application consists of three main threads:
-1. `rtcm_get_thread`: Connects to the NTRIP caster and fetches RTCM data.
-2. `rtcm_process_thread`: Forwards the fetched RTCM data to the GPS device.
-3. `read_messages_thread`: Reads UBX messages from the GPS and takes the appropriate action based on message.
-    For example, `NAV-PVT` writes the location data to InfluxDB.
+1. `rtcm_get_thread`: Connects to the NTRIP caster and fetches RTCM data into a
+   shared queue.
+2. `rtcm_process_thread`: Reads RTCM data from the queue and forwards it to the
+   GPS device's serial port.
+3. `read_messages_thread`: Reads UBX (NAV-PVT) messages from the GPS, formats
+   them as data points, and writes them to InfluxDB.
 
 The script is configured via a `GPS_TYPE` variable and environment variables
-for InfluxDB credentials. It is designed to be terminated with CTRL-C.
+for InfluxDB credentials. It is designed to be terminated gracefully with CTRL-C.
 """
 import os
 import dotenv
@@ -43,10 +45,11 @@ except ImportError:
 
 def influx_client_write(records):
     """
-    Attempts to write records to InfluxDB using line protocol.
+    Attempts to write records to InfluxDB using the line protocol.
     
     Args:
-        records: A single Point or a list of Points to write to InfluxDB.
+        records (Point or list): A single Point or a list of Points to write
+                                 to InfluxDB.
     """
     dotenv.load_dotenv()
     url = f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/influx/api/v3/write_lp?db=GPS&precision=second"
@@ -74,8 +77,8 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
 
     This function runs the `GNSSNTRIPClient` in a blocking manner. The client
     is configured to connect to the private RTK base station and place all
-
-    incoming RTCM data into the provided queue.
+    incoming RTCM data into the provided queue. It will continue to run until
+    the `stop_event` is set.
 
     Args:
         gnss_rtcm_queue (Queue): The queue to which RTCM data will be added.
@@ -114,14 +117,14 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
 
     This function runs in a loop, checking the queue for new data. If valid
     RTCM3 data is found, it is written directly to the GPS device's serial port
-    to enable RTK corrections.
+    to enable RTK corrections. It also logs metrics to InfluxDB in batches.
 
     Args:
         gnss_rtcm_queue (Queue): The queue from which to get RTCM data.
         gps (gps_reader.GPSReader): The GPS reader instance with an open serial port.
         stop_event (Event): A threading event to signal when to stop.
         gps_type (str): The type of GPS device (e.g., "sparkfun").
-        lock: To send data to the Serial
+        lock (Lock): A mutex to ensure thread-safe access to the serial port.
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
     msg_count = 0
@@ -131,11 +134,11 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
     metrics_batch = []
     while not stop_event.is_set():
         while not gnss_rtcm_queue.empty():
-            # Use get with timeout to avoid busy waiting
+            # Use get with a timeout to avoid busy-waiting.
             raw_data, _ = gnss_rtcm_queue.get(timeout=0.1)
             
             if protocol(raw_data) == RTCM3_PROTOCOL:
-                with lock:  # Using context manager for cleaner lock handling
+                with lock:
                     gps.ser.write(raw_data)
                 
                 msg_count += 1
@@ -143,18 +146,18 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
                     .tag("device", gps_type)
                     .field("ntrip_client_rtcm_recieved_int", 1))
                 
-                # Print queue size periodically
+                # Print the queue size periodically for debugging.
                 if msg_count - last_queue_size_print >= 10:
                     print(f"{'rtcm_process_thread':<20}: Queue size: {gnss_rtcm_queue.qsize()}")
                     last_queue_size_print = msg_count
                 
-                # Batch write to InfluxDB
+                # Write to InfluxDB in batches of 10 for efficiency.
                 if len(metrics_batch) >= 10:
                     influx_client_write(metrics_batch)
     
             gnss_rtcm_queue.task_done()
             
-        # Queue is empty, write any remaining metrics
+        # After the queue is empty, write any remaining metrics.
         if metrics_batch:
             influx_client_write(metrics_batch)
 
@@ -168,10 +171,10 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
     database using line protocol.
 
     Args:
-        stop_event (threading.Event): Event to stop reading messages
-        ubx_reader : The Serial wrapper to read UBX messages from serial.
+        stop_event (Event): A threading event to signal when to stop.
+        ubx_reader (UBXReader): The UBXReader instance for reading from the serial port.
         gps_type (str): The type of GPS device (e.g., "sparkfun").
-        lock: To send data to the Serial
+        lock (Lock): A mutex to ensure thread-safe access to the serial port.
     """
     # pylint: disable=unused-variable, broad-except
 
@@ -203,7 +206,8 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                         .field("fix_ok_int", int(parsed_data.gnssFixOk)) \
                         .field('carrier_phase_range_int', int(parsed_data.carrSoln))
 
-                    # Use provided timestamp if available
+                    # Use the provided timestamp if available, otherwise InfluxDB
+                    # will use the current time.
                     if parsed_data.validTime and parsed_data.validDate:
                         dt = datetime(
                             year=parsed_data.year, month=parsed_data.month, day=parsed_data.day,
@@ -241,10 +245,14 @@ def app():
     """
     Main application function to set up and run the NTRIP client threads.
 
-    Initializes the appropriate GPS reader based on the `GPS_TYPE` setting,
-    creates and starts the necessary threads for data fetching, processing,
-
-    and logging, and then waits for a `KeyboardInterrupt` to terminate.
+    This function performs the following steps:
+    1. Initializes the GPS reader based on the detected hardware.
+    2. Creates and starts the necessary threads for fetching RTCM data,
+       processing it, and logging GPS data to InfluxDB.
+    3. Waits for a `KeyboardInterrupt` (CTRL-C) to terminate the application.
+    4. Sets a `stop_event` to signal all threads to shut down gracefully.
+    5. Joins all threads to ensure they have finished before exiting.
+    6. Closes the serial connection to the GPS device.
     """
     print("Starting NTRIP Client...")
 
@@ -253,7 +261,7 @@ def app():
     stop_event = Event()
     lock = Lock()
 
-    # Configure GPS type
+    # Configure the GPS reader based on the detected hardware type.
     gps = gps_reader.GPSReader()
     gps_type = gps.gps_type
     match gps_type:
@@ -286,8 +294,7 @@ def app():
         )
     )
     
-    # Uncomment Below to include a stopwatch in the CLI that will show the
-    # start and stop UTC time along with the total seconds.
+    # Uncomment the following to include a stopwatch in the CLI.
     # thread_pool.append(
     #     Thread(
     #         target=stopwatch,
@@ -296,7 +303,7 @@ def app():
     #     )
     # )
 
-    # Configure the receiver
+    # Configure the receiver with the appropriate settings.
     try:
         nar = ubx_config.send_config(config_msg, gps.ser)
         if not nar:
@@ -306,12 +313,12 @@ def app():
         print(f'ERROR: Unexpected Error when writing config: {e}')
         return
 
-    # Start the threads
+    # Start all the threads.
     for t in thread_pool:
         t.start()
     print(f"{'main_thread':<20}: Threads started, press CTRL-C to terminate...")
     
-    # Main loop - wait for CTRL-C
+    # Main loop - wait for a termination signal (CTRL-C).
     try:
         while not stop_event.is_set():
             sleep(1)
@@ -319,12 +326,12 @@ def app():
         stop_event.set()
         print(f"\n{'main_thread':<20}: Termination signal received, shutting down threads...")
 
-    # Wait for all threads to finish
+    # Wait for all threads to finish their execution.
     for t in thread_pool:
         t.join()
     print(f"{'main_thread':<20}: All threads have finished.")
 
-    # Close the GPS serial connection
+    # Clean up by closing the GPS serial connection.
     gps.close_serial()
     print(f"{'main_thread':<20}: NTRIP Client terminated.")
 

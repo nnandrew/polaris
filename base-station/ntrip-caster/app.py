@@ -3,6 +3,12 @@ NTRIP Caster Application.
 
 This script initializes a GPS device, determines the local IP address, and
 starts the `gnssserver` process to broadcast GNSS data as an NTRIP caster.
+
+The script performs the following steps:
+1. Initializes a GPS reader to communicate with the GNSS device.
+2. Reads the base station configuration from `BS_Config.txt` and sends it to the device.
+3. Binds to all available network interfaces (0.0.0.0).
+4. Constructs and executes a `gnssserver` command to start the NTRIP caster.
 """
 import subprocess
 try:

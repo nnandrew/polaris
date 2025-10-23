@@ -13,11 +13,13 @@ The Lighthouse is the central coordination server, typically run on a cloud inst
 
 - **Enrollment Server**: A Flask-based web service that handles requests from new nodes (Base Stations or Rovers) to join the network. It authenticates nodes using a shared secret key, generates unique Nebula certificates and configuration files for them, and maintains a record of all nodes in the network.
 - **Nebula Lighthouse**: This core Nebula service acts as the discovery point for all other nodes, allowing them to find each other and establish secure, direct connections.
+- **InfluxDB**: The time-series database where the Rover logs its location data.
+- **Grafana**: A data visualization tool that connects to InfluxDB.
 
 ### 2. Base Station (e.g. Qualcomm RB5, Raspberry Pi)
 The Base Station is a stationary GNSS receiver with a known, fixed location. Its primary role is to generate and broadcast correction data.
 
-- **GPS Receiver**: A high-quality GNSS module (like the SparkFun u-blox ZED-F9P) that receives raw satellite signals.
+- **GNSS Receiver**: A high-quality GNSS module (like the SparkFun u-blox ZED-F9P) that receives raw satellite signals.
 - **NTRIP Caster**: A service (`gnssserver`) that takes the raw GNSS data, generates RTCM 3 correction messages, and broadcasts them over the network via an NTRIP (Networked Transport of RTCM via Internet Protocol) server.
 - **Enrollment Client**: A script that runs on startup to enroll with the Lighthouse and retrieve the necessary Nebula configuration to join the mesh network.
 
@@ -29,20 +31,29 @@ The Rover is the mobile unit whose position is being tracked.
 - **InfluxDB Logger**: A thread within the NTRIP client that reads the corrected position data (`NAV-PVT` messages) from the GPS and logs it to an InfluxDB time-series database for monitoring and analysis.
 - **Enrollment Client**: Same as the Base Station, this script allows the Rover to join the network.
 
-### (Optional) Dashboard
-A monitoring dashboard can be set up to visualize the status and data from all components.
 
-- **Grafana**: A data visualization tool that connects to InfluxDB.
-- **InfluxDB**: The time-series database where the Rover logs its location data.
+## Requirements
+
+### Hardware Prerequisites
+
+-   **Lighthouse**: The Lighthouse should be deployed on a cloud server with a public, static IP address. A small virtual private server (VPS) with 1 CPU and 1 GB of RAM is sufficient for this component.
+-   **Base Station and Rover**: The Base Station and Rover should be deployed on single-board computers (SBCs) with sufficient processing power and memory to run the Docker containers and Python applications. The Qualcomm RB5 or a similar device is a good choice.
+-   **GNSS Receivers**: For high-precision RTK positioning, it is essential to use identical, high-quality GNSS receivers for both the Base Station and the Rover. The SparkFun ZED-F9P is a recommended option.
+
+### Software Prerequisites
+
+- **Docker and Docker Compose**: The entire Polaris system is containerized using Docker. You will need to have Docker and Docker Compose installed on your component machines.
+- **Git**: The project is version-controlled with Git.
+
+### Security Prerequisites
+
+-   **Nebula Network**: The Nebula mesh network provides a secure, encrypted communication channel between the components. It is important to choose a strong, unique `LIGHTHOUSE_ADMIN_PASSWORD` to protect the enrollment process.
+-   **Firewall**: Configure a firewall on the Lighthouse server to restrict access to only the necessary ports (80 for HTTP, 443 for HTTPS, and 4242 for Nebula).
+-   **HTTPS**: The Nginx service in the Lighthouse is configured to use Let's Encrypt to automatically obtain and renew SSL certificates for HTTPS. It is highly recommended to use HTTPS to encrypt the communication between the enrollment clients and the Lighthouse.
 
 ## Setup Instructions
 
 Follow these steps to set up each component of the Polaris system.
-
-### Prerequisites
-- A server with a public, static IP address to act as the Lighthouse (e.g. an AWS EC2 instance).
-- Two single-board computers (e.g. Qualcomm RB5, Raspberry Pi 4) for the Base Station and Rover.
-- Two identical high-precision GNSS receiver modules (e.g., SparkFun ZED-F9P) that can output raw GNSS data.
 
 ### 1. Lighthouse Setup
 First, set up the central server.
@@ -54,19 +65,18 @@ First, set up the central server.
     ```
 
 2.  **Create the environment file:**
-    Create a file named `.env` inside the `lighthouse/` directory with the following content. Choose a strong, unique key for `LIGHTHOUSE_NETWORK_KEY`.
+    Create a file named `.env` inside the `lighthouse/` directory with the following content.
+    ```yaml
+    LIGHTHOUSE_HOSTNAME = "<your-domain>"
+    LIGHTHOUSE_ADMIN_USER = "<your-username>"
+    LIGHTHOUSE_ADMIN_PASSWORD = "<your-password>"
+    LIGHTHOUSE_TLS_EMAIL = "<your-email>"
     ```
-    LIGHTHOUSE_PUBLIC_IP="<Your-Server-Public-IP>"
-    LIGHTHOUSE_NETWORK_KEY="<Your-Secret-Network-Key>"
-    ```
-    You can also optionally add the following for Grafana Dashboard functionality with secrets possibly from [here](https://cloud2.influxdata.com/):
-    ```
-    INFLUXDB_URL="<Your-InfluxDB-Server>"
-    INFLUXDB_TOKEN="<Your-InfluxDB-Token>"
-    GF_SECURITY_ADMIN_USER="<Your-Grafana-User>"
-    GF_SECURITY_ADMIN_PASSWORD="<Your-Grafana-Password>"
-    ```
-3.  **Start the services:**
+
+3.  **Configure TLS:**
+    `initletsencrypt.sh`.
+
+4.  **Start the services:**
     Use Docker Compose to build and run the Lighthouse services.
     ```bash
     docker-compose up --build -d
@@ -82,10 +92,12 @@ Next, set up the stationary Base Station.
     cd polaris/base-station
     ```
 2.  **Create the environment file:**
-    Create a file named `.env` inside the `base-station/` directory. Use the **same IP and network key** as the Lighthouse.
-    ```
-    LIGHTHOUSE_PUBLIC_IP="<Your Server's Public IP>"
-    LIGHTHOUSE_NETWORK_KEY="<Your-Secret-Network-Key>"
+    Create a file named `.env` inside the `base-station/` directory.
+    ```bash
+    LIGHTHOUSE_HOSTNAME = "<your-domain>"
+    LIGHTHOUSE_ADMIN_USER = "<your-username>"
+    LIGHTHOUSE_ADMIN_PASSWORD = "<your-password>"
+    LIGHTHOUSE_TLS_EMAIL = "<your-email>"
     ```
 3.  **Connect the GPS:**
     Connect your GNSS module to the Base Station device via USB.
@@ -106,14 +118,10 @@ Finally, set up the mobile Rover.
     ```
 2.  **Create the environment file:**
     Create a file named `.env` inside the `rover/` directory.
-    ```
-    LIGHTHOUSE_PUBLIC_IP="<Your Server's Public IP>"
-    LIGHTHOUSE_NETWORK_KEY="<Your-Secret-Network-Key>"
-    ```
-    You can also optionally add the following for Grafana Dashboard functionality with secrets possibly from [here](https://cloud2.influxdata.com/):
-    ```
-    INFLUXDB_URL="<Your-InfluxDB-Server>"
-    INFLUXDB_TOKEN="<Your-InfluxDB-Token>"
+    ```yaml
+    LIGHTHOUSE_HOSTNAME = "<your-domain>"
+    LIGHTHOUSE_ADMIN_PASSWORD = "<your-password>"
+    GNSS_DEVICE_FILE = "<your-gnss-device>" # e.g. /dev/ttyACM0
     ```
 
 3.  **Connect the GPS:**
@@ -135,10 +143,9 @@ Once all three components are running, the system will operate automatically:
 
 You can monitor the system by:
 -   **Viewing the logs** of the Docker containers on each machine: `docker-compose logs -f <service_name>`
--   **Checking the enrolled hosts** by visiting `http://<Your Server's Public IP>/api/hosts` in a browser.
--   **Visualizing the data** in the Grafana Dashbaord at `http://<Your Server's Public IP>:3000` in the browser.
+-   **Checking the enrolled hosts** by visiting `http://<Your Server's Public IP>/nebula` in a browser.
+-   **Visualizing the data** in the Grafana Dashbaord at `https://<Your Server's Domain>/grafana` in the browser.
 
 ## Useful Links
-- **InfluxDB Cloud**: [https://www.influxdata.com/products/influxdb-cloud/](https://www.influxdata.com/products/influxdb-cloud/)
 - **Nebula Project**: [https://github.com/slackhq/nebula](https://github.com/slackhq/nebula)
 - **pygnssutils Documentation**: [https://github.com/semuconsulting/pygnssutils](https://github.com/semuconsulting/pygnssutils)
