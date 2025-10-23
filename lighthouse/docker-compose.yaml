@@ -48,6 +48,12 @@ services:
       - ./influxdb/entrypoint.sh:/entrypoint.sh
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     restart: unless-stopped
+  influxdb-explorer:
+    image: influxdata/influxdb3-ui:1.3.0
+    container_name: influxdb-explorer
+    volumes:
+      - ./influxdb/config:/app-root/config:ro
+    restart: unless-stopped
   nginx:
     image: nginx:alpine
     container_name: nginx
