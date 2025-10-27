@@ -9,7 +9,7 @@
         .login-form { text-align: left; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         table, th, td { border: 1px solid black; }
-        th, td { padding: 8px; text-align: left; }
+        th, td { padding: 4px; text-align: left; }
         .form-section { margin-top: 20px; }
         .error { color: red; }
         button { width: 80px; margin-right: 5px; }
@@ -116,13 +116,13 @@
                 <form action="/api/enroll" method="post" style="display:inline;">
                     <span>192.168.100.</span>
                     <input type="number" name="ip_octet" min="2" max="254" placeholder="2-254" style="width: 50px;" required>
-                    <td>
                     <td>N/A</td>
                     <td>
                         <input type="text" name="group_name" placeholder="Name" required>
                     </td>
                     <td>
                         <button type="submit">Add</button>
+                    </td>
                 </form>
             </td>
         </tr>

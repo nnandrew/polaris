@@ -42,7 +42,7 @@ def main():
         "--ntripmode", "1",      # NTRIP Caster mode
         "--protfilter", "4",     
         "--format", "2",         # Raw binary
-        "--ntripuser", "test",
+        "--ntripuser", "polaris",
         "--ntrippassword", "none",
         "--verbosity", "2",      # Verbose output
     ]

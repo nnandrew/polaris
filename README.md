@@ -66,7 +66,7 @@ First, set up the central server.
 
 2.  **Create the environment file:**
     Create a file named `.env` inside the `lighthouse/` directory with the following content.
-    ```yaml
+    ```bash
     LIGHTHOUSE_HOSTNAME = "<your-domain>"
     LIGHTHOUSE_ADMIN_USER = "<your-username>"
     LIGHTHOUSE_ADMIN_PASSWORD = "<your-password>"
@@ -95,9 +95,8 @@ Next, set up the stationary Base Station.
     Create a file named `.env` inside the `base-station/` directory.
     ```bash
     LIGHTHOUSE_HOSTNAME = "<your-domain>"
-    LIGHTHOUSE_ADMIN_USER = "<your-username>"
     LIGHTHOUSE_ADMIN_PASSWORD = "<your-password>"
-    LIGHTHOUSE_TLS_EMAIL = "<your-email>"
+    GNSS_DEVICE_FILE = "<your-gnss-device>" # e.g. /dev/ttyACM0
     ```
 3.  **Connect the GPS:**
     Connect your GNSS module to the Base Station device via USB.
@@ -118,7 +117,7 @@ Finally, set up the mobile Rover.
     ```
 2.  **Create the environment file:**
     Create a file named `.env` inside the `rover/` directory.
-    ```yaml
+    ```bash
     LIGHTHOUSE_HOSTNAME = "<your-domain>"
     LIGHTHOUSE_ADMIN_PASSWORD = "<your-password>"
     GNSS_DEVICE_FILE = "<your-gnss-device>" # e.g. /dev/ttyACM0

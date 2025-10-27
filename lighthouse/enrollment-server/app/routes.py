@@ -33,14 +33,19 @@ def enroll():
         network_key = flask.request.args.get('LIGHTHOUSE_ADMIN_PASSWORD')
         if not network_key or network_key != flask.current_app.config.get("LIGHTHOUSE_ADMIN_PASSWORD"):
             return "Unauthorized", 401
+        
         group_name = flask.request.args.get('group_name')
         if not group_name:
             return "Missing group_name", 400
-        ip_octet = None
-        host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'), ip_octet)
+        
+        if group_name == "rover":
+            host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'), ip_octet)
+        elif group_name == "base_station":
+            host_id = 2  # Fixed IP for base station
+            
         if host_id is None:
             return "Enrollment failed", 400
-        return flask.redirect(flask.url_for('main.download_config', host_id=host_id))
+        return flask.redirect(flask.url_for('main.download_config', host_id=host_id, LIGHTHOUSE_ADMIN_PASSWORD=network_key))
     else:
         # Manual enrollment via admin panel
         if not flask.session.get('logged_in'):
@@ -140,10 +145,10 @@ def rename():
         nebula.rename_group(host_id, new_group_name)
     return flask.redirect(flask.url_for('main.admin'))
 
-@main_bp.route('/api/download_config', methods=['POST'])
+@main_bp.route('/api/download_config', methods=['GET', 'POST'])
 def download_config():
     """
-    Downloads the Nebula config file for a specific host. Requires admin session.
+    Downloads the Nebula config file for a specific host. Requires admin session or token.
     
     Args:
         host_id (int): The host ID from the database.
@@ -151,10 +156,17 @@ def download_config():
     Returns:
         Flask response containing the config file or an error message.
     """
-    if not flask.session.get('logged_in'):
-        return flask.redirect(flask.url_for('main.admin'))
-    host_id = flask.request.form.get('host_id')
-    
+
+    if flask.request.method == 'GET':
+        network_key = flask.request.args.get('LIGHTHOUSE_ADMIN_PASSWORD')
+        if not network_key or network_key != flask.current_app.config.get("LIGHTHOUSE_ADMIN_PASSWORD"):
+            return "Unauthorized", 401
+        host_id = flask.request.args.get('host_id')
+    else:
+        if not flask.session.get('logged_in'):
+            return flask.redirect(flask.url_for('main.admin'))
+        host_id = flask.request.form.get('host_id')
+
     try:
         # Verify the host exists in the database
         conn = sqlite3.connect('./record.db')

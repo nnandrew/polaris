@@ -17,6 +17,7 @@ The script is configured via a `GPS_TYPE` variable and environment variables
 for InfluxDB credentials. It is designed to be terminated gracefully with CTRL-C.
 """
 import os
+import sys
 import dotenv
 import requests
 from queue import Queue
@@ -85,16 +86,23 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
         stop_event (Event): A threading event to signal when to stop.
     """
     print(f"{'rtcm_get_thread':<20}: Starting...")
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "personal":
+            print(f"{'rtcm_get_thread':<20}: Using private RTK caster...")
+            dotenv.load_dotenv()
+            server = requests.get(f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/api/ntrip").text.strip()
+            mountpoint = "pygnssutils"
+            ntripuser = "polaris"
+        else:
+            print(f"{'rtcm_get_thread':<20}: Using public RTK caster (unreliable)...")
+            server = "rtk2go.com"
+            mountpoint = "AUS_LOFT_GNSS"
+            ntripuser = "andrewvnguyen@utexas.edu"
     gnc = GNSSNTRIPClient()
     gnc.run(
-        # Public RTK 12km away, unreliable)
-        # server="rtk2go.com",
-        # mountpoint="AUS_LOFT_GNSS",
-        # ntripuser="andrewvnguyen@utexas.edu",
-        #Private RTK
-        server="192.168.100.3", # Private RTK, TODO: get with /api/ntrip
-        mountpoint="pygnssutils",
-        ntripuser="test",
+        server=server,
+        mountpoint=mountpoint,
+        ntripuser=ntripuser,
         ntrippassword="none",
         port=2101,
         https=0,
