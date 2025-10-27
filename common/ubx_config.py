@@ -178,7 +178,7 @@ def convert_u_center_config(config_file) -> object:
                     (key, ubx_attribute_type) = UBX_CONFIG_DATABASE[ubx_id] # Get the attribute string name
                     attribute_type = ATTTYPE[atttyp(ubx_attribute_type)] # Get the class of attribute
                     if attribute_type is bytes:
-                        temp_msg = (ubx_id, int(split_line[2], 0).to_bytes(length=1)) # Must convert to bytes if ID requires it
+                        temp_msg = (ubx_id, int(split_line[2], 0).to_bytes(length=1, byteorder='big')) # Must convert to bytes if ID requires it
                     elif ubx_id == 'CFG_TMODE_LON':
                         temp_msg = (ubx_id, signed_16(split_line[2])) # Negative numbers in hex work weird
                     else:

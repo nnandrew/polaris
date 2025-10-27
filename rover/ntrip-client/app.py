@@ -98,8 +98,7 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
             mountpoint = "pygnssutils"
             ntripuser = "polaris"
             print(f"{'rtcm_get_thread':<20}: Using personal RTK caster at {server}")
-            
-        else:
+        elif sys.argv[1] == "public":
             server = "rtk2go.com"
             mountpoint = "AUS_LOFT_GNSS"
             ntripuser = "andrewvnguyen@utexas.edu"
