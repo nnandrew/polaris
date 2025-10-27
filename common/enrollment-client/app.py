@@ -69,6 +69,7 @@ if __name__ == '__main__':
         # Guard clause for VPN connectivity
         vpn_connected = False
         for i in range(10):
+            logger.info(f"Pinging Lighthouse to check connectivity... (Attempt {i+1}/10)")
             if ping("192.168.100.1"): # Lighthouse VPN IP
                 vpn_connected = True
                 break

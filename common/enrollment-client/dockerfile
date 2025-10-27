@@ -1,5 +1,6 @@
 FROM python:3.10-slim
 WORKDIR /home/enrollment-client
 COPY . /home/enrollment-client
+RUN apt-get update && apt-get install -y iputils-ping && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir -r requirements.txt
 CMD ["python", "app.py"]

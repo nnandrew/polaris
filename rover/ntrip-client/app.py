@@ -53,9 +53,12 @@ def influx_client_write(records):
                                  to InfluxDB.
     """
     dotenv.load_dotenv()
+    LIGHTHOUSE_ADMIN_PASSWORD = os.getenv("LIGHTHOUSE_ADMIN_PASSWORD")
+    if not LIGHTHOUSE_ADMIN_PASSWORD.startswith("apiv3_"):
+        LIGHTHOUSE_ADMIN_PASSWORD = "apiv3_" + LIGHTHOUSE_ADMIN_PASSWORD
     url = f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/influx/api/v3/write_lp?db=GPS&precision=second"
     headers = {
-        "Authorization": f"Token {os.getenv('LIGHTHOUSE_ADMIN_PASSWORD')}",
+        "Authorization": f"Token {LIGHTHOUSE_ADMIN_PASSWORD}",
         "Content-Type": "text/plain; charset=utf-8"
     }
     try:
@@ -69,6 +72,8 @@ def influx_client_write(records):
         response = requests.post(url, headers=headers, data=payload)
         if response.status_code != 204:
             print(f"{'rtcm_process_thread':<20}: Error writing: {response.status_code} - {response.text}")
+            return
+        print(f"{'rtcm_process_thread':<20}: InfluxDB write successful.")
     except Exception as err:
         print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
 
@@ -88,16 +93,18 @@ def rtcm_get_thread(gnss_rtcm_queue, stop_event):
     print(f"{'rtcm_get_thread':<20}: Starting...")
     if len(sys.argv) > 1:
         if sys.argv[1] == "personal":
-            print(f"{'rtcm_get_thread':<20}: Using private RTK caster...")
             dotenv.load_dotenv()
             server = requests.get(f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/api/ntrip").text.strip()
             mountpoint = "pygnssutils"
             ntripuser = "polaris"
+            print(f"{'rtcm_get_thread':<20}: Using personal RTK caster at {server}")
+            
         else:
-            print(f"{'rtcm_get_thread':<20}: Using public RTK caster (unreliable)...")
             server = "rtk2go.com"
             mountpoint = "AUS_LOFT_GNSS"
             ntripuser = "andrewvnguyen@utexas.edu"
+            print(f"{'rtcm_get_thread':<20}: Using public RTK caster at {server}")
+            
     gnc = GNSSNTRIPClient()
     gnc.run(
         server=server,
