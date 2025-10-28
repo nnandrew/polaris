@@ -30,8 +30,8 @@ def ping(host):
     Returns True if host (str) responds to a ping request.
     """
 
-    param = '-n' if platform.system().lower()=='windows' else '-c'
-    command = ['ping', param, '1', host]
+    count_param = '-n' if platform.system().lower()=='windows' else '-c'
+    command = ['ping', count_param, '1', '-W', '1', host]
     return subprocess.call(command) == 0
 
 if __name__ == '__main__':
@@ -68,12 +68,12 @@ if __name__ == '__main__':
         
         # Guard clause for VPN connectivity
         vpn_connected = False
+        # 10 attempts to punch through with VPN
         for i in range(10):
             logger.info(f"Pinging Lighthouse to check connectivity... (Attempt {i+1}/10)")
             if ping("192.168.100.1"): # Lighthouse VPN IP
                 vpn_connected = True
                 break
-            time.sleep(1)
 
         # Only attempt enrollment if VPN cannot connect
         if not vpn_connected:
