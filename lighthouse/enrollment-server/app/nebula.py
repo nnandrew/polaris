@@ -11,6 +11,7 @@ import sqlite3
 import ruamel.yaml
 from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarString
 from flask import current_app
+from functools import partial
 import subprocess
 import concurrent.futures
 
@@ -129,7 +130,7 @@ def get_base_station():
     conn.close()
     return result
 
-def ping_host(vpn_ip):
+def ping_host(vpn_ip, logger=None):
     """
     Pings a VPN IP address once and returns the ping time in ms.
 
@@ -146,7 +147,8 @@ def ping_host(vpn_ip):
             stderr=subprocess.DEVNULL,
             text=True,
         )
-        current_app.logger.info(f"Ping result for {vpn_ip}: {result.stdout}")
+        if logger:
+            logger.info(f"Ping result for {vpn_ip}: {result.stdout}")
         is_alive = result.returncode == 0
         ping_ms = None
         if is_alive:
@@ -176,7 +178,7 @@ def get_hosts():
     hosts_with_status = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
         vpn_ips = [row[1] for row in results]
-        ping_results = list(executor.map(ping_host, vpn_ips))
+        ping_results = list(executor.map(partial(ping_host, logger=current_app.logger), vpn_ips))
         for row, ping_ms in zip(results, ping_results):
             hosts_with_status.append(row + (ping_ms,))
 
