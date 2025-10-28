@@ -14,9 +14,7 @@
         .error { color: red; }
         button { width: 80px; margin-right: 5px; }
         .action-buttons { white-space: nowrap; }
-        h1 {
-            text-align: center;
-        }
+        h1 { text-align: center; }
         body {
             margin: 40px auto;
             max-width: 800px;
@@ -25,30 +23,16 @@
             color: #444;
             padding: 0 10px;
         }
-        h1,
-        h2,
-        h3 {
-            line-height: 1.2;
-        }
-        #musicButton:hover {
-            cursor: pointer;
-        }
+        h1, h2, h3 { line-height: 1.2; }
+        #musicButton:hover { cursor: pointer; }
         /* Safari */
         @-webkit-keyframes spin {
-            0% {
-                -webkit-transform: rotate(0deg);
-            }
-            100% {
-                -webkit-transform: rotate(360deg);
-            }
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
         }
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -100,7 +84,7 @@
     <h1>Nebula Admin Panel</h1>
     <a href="/nebula/logout">Logout</a>
 
-    <table>
+    <table id="hostsTable">
         <thead>
         <tr>
             <th>VPN IP</th>
@@ -153,6 +137,7 @@
     </table>
     {% endif %}
 </div>
+
 <script>
     const autoplay = '&autoplay=1';
     function toggleMusic() {
@@ -168,6 +153,70 @@
             musicButton.style.background = `linear-gradient(-45deg, #0A197A, #00D4FF)`;
         }
     }
+
+    // Periodically fetch updated hosts list
+    async function updateHosts() {
+        try {
+            const response = await fetch('/api/hosts');
+            if (!response.ok) throw new Error('Failed to fetch hosts');
+            const hosts = await response.json();
+
+            const tbody = document.querySelector('#hostsTable tbody');
+            tbody.innerHTML = '';
+
+            // Manual enrollment row
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <form action="/api/enroll" method="post" style="display:inline;">
+                            <span>192.168.100.</span>
+                            <input type="number" name="ip_octet" min="2" max="254" placeholder="2-254" style="width: 50px;" required>
+                            <td>N/A</td>
+                            <td>
+                                <input type="text" name="group_name" placeholder="Name" required>
+                            </td>
+                            <td>
+                                <button type="submit">Add</button>
+                            </td>
+                        </form>
+                    </td>
+                </tr>
+            `;
+
+            // Add hosts
+            hosts.forEach(host => {
+                const disabled = host[1] === '192.168.100.1' ? 'disabled' : '';
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${host[1]}</td>
+                        <td>${host[3]} ms</td>
+                        <td>
+                            <form action="/api/rename" method="post" style="display:inline;">
+                                <input type="hidden" name="host_id" value="${host[0]}">
+                                <input type="text" name="new_group_name" value="${host[2]}" required>
+                                <button type="submit" ${disabled}>Rename</button>
+                            </form>
+                        </td>
+                        <td class="action-buttons">
+                            <form action="/api/download_config" method="post" style="display:inline;">
+                                <input type="hidden" name="host_id" value="${host[0]}">
+                                <button type="submit" ${disabled}>Download</button>
+                            </form>
+                            <form action="/api/remove" method="post" style="display:inline;">
+                                <input type="hidden" name="host_id" value="${host[0]}">
+                                <button type="submit" ${disabled}>Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (err) {
+            console.error('Error updating hosts:', err);
+        }
+    }
+
+    // Call once on page load
+    document.addEventListener('DOMContentLoaded', updateHosts);
 </script>
 </body>
 </html>

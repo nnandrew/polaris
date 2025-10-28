@@ -96,7 +96,7 @@ def admin():
     """
     if not flask.session.get('logged_in'):
         return flask.render_template('admin.html')
-    hosts = nebula.get_hosts()
+    hosts = nebula.get_hosts(ping=False)
     return flask.render_template('admin.html', hosts=hosts)
 
 @main_bp.route('/nebula/login', methods=['POST'])
@@ -118,6 +118,13 @@ def logout():
     """
     flask.session.pop('logged_in', None)
     return flask.redirect(flask.url_for('main.admin'))
+
+@main_bp.route('/api/hosts', methods=['GET'])
+def get_hosts():
+    if not flask.session.get('logged_in'):
+        return flask.jsonify({'error': 'Not logged in'}), 401
+    hosts = nebula.get_hosts(ping=True)
+    return flask.jsonify(hosts)
 
 @main_bp.route('/api/remove', methods=['POST'])
 def remove():

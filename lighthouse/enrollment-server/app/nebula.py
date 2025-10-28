@@ -146,9 +146,8 @@ def ping_host(vpn_ip):
             stderr=subprocess.DEVNULL,
             text=True,
         )
-        current_app.logger.info(f"Ping result for {vpn_ip}: {result.stdout}")
         is_alive = result.returncode == 0
-        ping_ms = None
+        ping_ms = -1
         if is_alive:
             # Parse ping output for rtt min/avg/max/mdev
             for line in result.stdout.splitlines():
@@ -159,7 +158,7 @@ def ping_host(vpn_ip):
     except Exception:
         return -1
 
-def get_hosts():
+def get_hosts(ping=False):
     """
     Retrieves all hosts from the database and pings each host.
 
@@ -181,11 +180,15 @@ def get_hosts():
     #     hosts_with_status.append(row + (ping_ms,)) 
     
     # Concurrent pinging
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        vpn_ips = [row[1] for row in results]
-        ping_results = list(executor.map(ping_host, vpn_ips))
-        for row, ping_ms in zip(results, ping_results):
-            hosts_with_status.append(row + (ping_ms,))
+    if ping:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            vpn_ips = [row[1] for row in results]
+            ping_results = list(executor.map(ping_host, vpn_ips))
+            for row, ping_ms in zip(results, ping_results):
+                hosts_with_status.append(row + (ping_ms,))
+    else:
+        for row in results:
+            hosts_with_status.append(row + (-1,))
 
     return hosts_with_status
 
