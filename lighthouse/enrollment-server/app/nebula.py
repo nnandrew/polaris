@@ -141,7 +141,7 @@ def ping_host(vpn_ip):
     """
     try:
         result = subprocess.run(
-            ["ping", "-c", "3", "-W", "1", vpn_ip],
+            ["ping", "-c", "1", "-W", "1", vpn_ip],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
@@ -150,10 +150,10 @@ def ping_host(vpn_ip):
         is_alive = result.returncode == 0
         ping_ms = None
         if is_alive:
-            # Parse ping output for time=XX ms
+            # Parse ping output for rtt min/avg/max/mdev
             for line in result.stdout.splitlines():
-                if "time=" in line:
-                    ping_ms = float(line.split("time=")[-1].split()[0])
+                if "rtt" in line:
+                    ping_ms = float(line.split("/")[-2])
                     break
         return ping_ms
     except Exception:
@@ -174,14 +174,18 @@ def get_hosts():
     conn.close()
 
     hosts_with_status = []
-    for row in results:
-        ping_ms = ping_host(row[1])
-        hosts_with_status.append(row + (ping_ms,)) 
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     vpn_ips = [row[1] for row in results]
-    #     ping_results = list(executor.map(ping_host, vpn_ips))
-    #     for row, ping_ms in zip(results, ping_results):
-    #         hosts_with_status.append(row + (ping_ms,))
+    
+    # Sequential pinging
+    # for row in results:
+    #     ping_ms = ping_host(row[1])
+    #     hosts_with_status.append(row + (ping_ms,)) 
+    
+    # Concurrent pinging
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        vpn_ips = [row[1] for row in results]
+        ping_results = list(executor.map(ping_host, vpn_ips))
+        for row, ping_ms in zip(results, ping_results):
+            hosts_with_status.append(row + (ping_ms,))
 
     return hosts_with_status
 
