@@ -137,26 +137,26 @@ def ping_host(vpn_ip):
         vpn_ip (str): The VPN IP to ping.
 
     Returns:
-        float: Ping time in ms, or -1 if unreachable.
+        str: The ping status.
     """
     try:
         result = subprocess.run(
-            ["ping", "-c", "1", "-W", "1", vpn_ip],
+            ["ping", "-c", "1", "-W", "5", vpn_ip],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
         )
-        is_alive = result.returncode == 0
-        ping_ms = -1
-        if is_alive:
+        if result.returncode == 0:
             # Parse ping output for rtt min/avg/max/mdev
             for line in result.stdout.splitlines():
                 if "rtt" in line:
-                    ping_ms = float(line.split("/")[-2])
+                    ping_status = f"{float(line.split("/")[-2]):4.0f} ms"
                     break
-        return ping_ms
+        else:
+            ping_status = "   down"
     except Exception:
-        return -1
+        ping_status = "  error"
+    return ping_status
 
 def get_hosts(ping=False):
     """
@@ -184,11 +184,11 @@ def get_hosts(ping=False):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             vpn_ips = [row[1] for row in results]
             ping_results = list(executor.map(ping_host, vpn_ips))
-            for row, ping_ms in zip(results, ping_results):
-                hosts_with_status.append(row + (ping_ms,))
+            for row, ping_status in zip(results, ping_results):
+                hosts_with_status.append(row + (ping_status,))
     else:
         for row in results:
-            hosts_with_status.append(row + (-1,))
+            hosts_with_status.append(row + ("    ...",))
 
     return hosts_with_status
 

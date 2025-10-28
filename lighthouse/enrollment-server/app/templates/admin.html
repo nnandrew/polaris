@@ -113,7 +113,7 @@
         {% for host in hosts %}
         <tr>
             <td>{{ host[1] }}</td>
-            <td>{{ host[3] }} ms</td>
+            <td>{{ host[3] }}</td>
             <td>
                 <form action="/api/rename" method="post" style="display:inline;">
                     <input type="hidden" name="host_id" value="{{ host[0] }}">
@@ -189,7 +189,7 @@
                 tbody.innerHTML += `
                     <tr>
                         <td>${host[1]}</td>
-                        <td>${host[3]} ms</td>
+                        <td>${host[3]}</td>
                         <td>
                             <form action="/api/rename" method="post" style="display:inline;">
                                 <input type="hidden" name="host_id" value="${host[0]}">
