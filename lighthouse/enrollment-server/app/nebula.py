@@ -146,6 +146,7 @@ def ping_host(vpn_ip):
             stderr=subprocess.DEVNULL,
             text=True,
         )
+        current_app.logger.info(f"Ping result for {vpn_ip}: {result.stdout}")
         is_alive = result.returncode == 0
         ping_ms = None
         if is_alive:
