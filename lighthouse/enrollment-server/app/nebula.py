@@ -150,7 +150,7 @@ def ping_host(vpn_ip):
             # Parse ping output for rtt min/avg/max/mdev
             for line in result.stdout.splitlines():
                 if "rtt" in line:
-                    ping_status = f"{float(line.split("/")[-2]):4.0f} ms"
+                    ping_status = f"{float(line.split('/')[-2]):4.0f} ms"
                     break
         else:
             ping_status = "   down"
