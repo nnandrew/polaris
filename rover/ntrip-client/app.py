@@ -16,22 +16,23 @@ The application consists of three main threads:
 The script is configured via a `GPS_TYPE` variable and environment variables
 for InfluxDB credentials. It is designed to be terminated gracefully with CTRL-C.
 """
+import argparse
 import os
 import sys
+import queue
 import dotenv
 import requests
-from queue import Queue
 from time import sleep
 from pygnssutils import GNSSNTRIPClient
+from pygnssutils.gnssntripclient import GGAFIXED
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
 from threading import (
     Event,
     Thread,
     Lock
 )
-from influxdb_client_3 import (
-    Point
-)
+from influxdb_client_3 import Point
 from pyubx2 import (
     protocol,
     RTCM3_PROTOCOL
@@ -39,15 +40,14 @@ from pyubx2 import (
 try:
     from common import gps_reader, ubx_config
 except ImportError:
-    import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../common")
     import gps_reader
     import ubx_config
 
-def influx_client_write(records):
+def influx_client_write_worker(records):   
     """
-    Attempts to write records to InfluxDB using the line protocol.
-    
+    Worker function to write records to InfluxDB.
+
     Args:
         records (Point or list): A single Point or a list of Points to write
                                  to InfluxDB.
@@ -71,59 +71,21 @@ def influx_client_write(records):
             return
         response = requests.post(url, headers=headers, data=payload)
         if response.status_code != 204:
-            print(f"{'rtcm_process_thread':<20}: Error writing: {response.status_code} - {response.text}")
+            print(f"{'rtcm_process_thread':<20}: Influx write error: {response.status_code} - {response.text}")
             return
-        print(f"{'rtcm_process_thread':<20}: InfluxDB write successful.")
+        print(f"{'rtcm_process_thread':<20}: InfluxDB write successful. {len(payload.encode(encoding='utf-8'))} bytes sent.")
     except Exception as err:
         print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
 
-def rtcm_get_thread(gnss_rtcm_queue, stop_event):
+def influx_client_write(records):
     """
-    Connects to an NTRIP caster and streams RTCM data into a queue.
-
-    This function runs the `GNSSNTRIPClient` in a blocking manner. The client
-    is configured to connect to the private RTK base station and place all
-    incoming RTCM data into the provided queue. It will continue to run until
-    the `stop_event` is set.
-
+    Initiates a background thread to write records to InfluxDB.
+    
     Args:
-        gnss_rtcm_queue (Queue): The queue to which RTCM data will be added.
-        stop_event (Event): A threading event to signal when to stop.
+        records (Point or list): A single Point or a list of Points to write
+                                 to InfluxDB.
     """
-    print(f"{'rtcm_get_thread':<20}: Starting...")
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "personal":
-            dotenv.load_dotenv()
-            server = requests.get(f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/api/ntrip").text.strip()
-            mountpoint = "pygnssutils"
-            ntripuser = "polaris"
-            print(f"{'rtcm_get_thread':<20}: Using personal RTK caster at {server}")
-        elif sys.argv[1] == "public":
-            server = "rtk2go.com"
-            mountpoint = "AUS_LOFT_GNSS"
-            ntripuser = "andrewvnguyen@utexas.edu"
-            print(f"{'rtcm_get_thread':<20}: Using public RTK caster at {server}")
-            
-    gnc = GNSSNTRIPClient()
-    gnc.run(
-        server=server,
-        mountpoint=mountpoint,
-        ntripuser=ntripuser,
-        ntrippassword="none",
-        port=2101,
-        https=0,
-        datatype="RTCM",
-        output=gnss_rtcm_queue,
-        # DGPS Configuration (unused)
-        ggainterval=-1,
-        ggamode=1,  # fixed rover reference coordinates
-        reflat=0.0,
-        reflon=0.0,
-        refalt=0.0,
-        refsep=0.0,
-    )
-    while not stop_event.is_set():
-        sleep(1)
+    Thread(target=influx_client_write_worker, args=(records,), daemon=True).start()
 
 def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
     """
@@ -142,38 +104,34 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
     """
     print(f"{'rtcm_process_thread':<20}: Starting...")
     msg_count = 0
-    last_queue_size_print = 0
-    
-    # Batch metrics for more efficient InfluxDB writes
-    metrics_batch = []
     while not stop_event.is_set():
-        while not gnss_rtcm_queue.empty():
-            # Use get with a timeout to avoid busy-waiting.
+        try:
             raw_data, _ = gnss_rtcm_queue.get(timeout=0.1)
-            
-            if protocol(raw_data) == RTCM3_PROTOCOL:
-                with lock:
-                    gps.ser.write(raw_data)
-                
-                msg_count += 1
-                metrics_batch.append(Point("metrics")
-                    .tag("device", gps_type)
-                    .field("ntrip_client_rtcm_recieved_int", 1))
-                
-                # Print the queue size periodically for debugging.
-                if msg_count - last_queue_size_print >= 10:
-                    print(f"{'rtcm_process_thread':<20}: Queue size: {gnss_rtcm_queue.qsize()}")
-                    last_queue_size_print = msg_count
-                
-                # Write to InfluxDB in batches of 10 for efficiency.
-                if len(metrics_batch) >= 10:
-                    influx_client_write(metrics_batch)
-    
-            gnss_rtcm_queue.task_done()
-            
-        # After the queue is empty, write any remaining metrics.
-        if metrics_batch:
-            influx_client_write(metrics_batch)
+            try:
+                if protocol(raw_data) == RTCM3_PROTOCOL:
+                    with lock:
+                        gps.ser.write(raw_data)
+                    msg_count += 1
+
+                    # Log received RTCM message metric every 4 messages
+                    if msg_count >= 4:
+                        msg_count = 0
+                        point = Point("metrics") \
+                            .tag("device", gps_type) \
+                            .field("ntrip_client_rtcm_received_int", 1) \
+                            .time(int(datetime.now(timezone.utc).timestamp()))
+                        influx_client_write(point)
+                        print(f"{'rtcm_process_thread':<20}: Queue size: {gnss_rtcm_queue.qsize()}")
+
+            finally:
+                gnss_rtcm_queue.task_done()
+        except queue.Empty:
+            # No data available in queue
+            continue
+        except Exception as e:
+            print(f"{'rtcm_process_thread':<20}: Error: {e}")
+            continue
+    print(f"{'rtcm_process_thread':<20}: Exiting.")
 
 def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
     """
@@ -190,7 +148,6 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
         gps_type (str): The type of GPS device (e.g., "sparkfun").
         lock (Lock): A mutex to ensure thread-safe access to the serial port.
     """
-    # pylint: disable=unused-variable, broad-except
 
     print(f"{'read_messages_thread':<20}: Starting...")
 
@@ -229,14 +186,17 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                             tzinfo=timezone.utc
                         )
                         point.time(int(dt.timestamp()))
+                        print(f"{'read_messages_thread':<20}: Timestamp: {dt.isoformat()}")
 
                     influx_client_write(point)
                 except Exception as e:
                     print(f"{'read_messages_thread':<20}: Error: {e}. Re-initializing...")
             elif parsed_data and parsed_data.identity == 'RXM-RTCM':
-                print(f"{'read_messages_threadDEBUG':<20}: {parsed_data}")
-            # elif parsed_data:
-            #     print(f'IDK This data: {parsed_data}')
+                print(f"{'read_messages_thread:':<20}: DEBUG: {parsed_data}")
+                pass
+            elif parsed_data:
+                # print(f'IDK This data: {parsed_data}')
+                pass
         except Exception as e:
             print(f"\n{'read_messages_thread':<20}: Something went wrong {e}\n")
             continue
@@ -285,15 +245,20 @@ def app():
             config_msg = gps.get_nav_pvt_config(uart=True)
         case "SPARKFUN":
             config_msg = ubx_config.convert_u_center_config('R_Config.txt')
-            if len(sys.argv) > 1 and (sys.argv[1] == "personal" or sys.argv[1] == "public"):
-                gnss_rtcm_queue = Queue()
-                thread_pool.append(
-                    Thread(
-                        target=rtcm_get_thread,
-                        args=(gnss_rtcm_queue, stop_event),
-                        daemon=True
-                    )
-                )
+            if len(sys.argv) > 1:
+                if sys.argv[1] == "personal":
+                    dotenv.load_dotenv()
+                    server = requests.get(f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/api/ntrip").text.strip()
+                    mountpoint = "pygnssutils"
+                    ntripuser = "polaris"
+                    print(f"{'rtcm_get_thread':<20}: Using personal RTK caster at {server}")
+                elif sys.argv[1] == "public":
+                    server = "rtk2go.com"
+                    mountpoint = "AUS_LOFT_GNSS"
+                    ntripuser = "andrewvnguyen@utexas.edu"
+                    print(f"{'rtcm_get_thread':<20}: Using public RTK caster at {server}")
+                gnss_rtcm_queue = queue.Queue()
+                gnc = GNSSNTRIPClient()
                 thread_pool.append(
                     Thread(
                         target=rtcm_process_thread,
@@ -331,6 +296,16 @@ def app():
     # Start all the threads.
     for t in thread_pool:
         t.start()
+    if gnc:
+        gnc.run(
+            server=server,
+            mountpoint=mountpoint,
+            ntripuser=ntripuser,
+            ntrippassword="none",
+            output=gnss_rtcm_queue,
+            stop_event=stop_event,
+            ggamode=GGAFIXED
+        )
     print(f"{'main_thread':<20}: Threads started, press CTRL-C to terminate...")
     
     # Main loop - wait for a termination signal (CTRL-C).

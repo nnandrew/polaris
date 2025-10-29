@@ -41,13 +41,17 @@ Flash CFG-TMODE-HEIGHT 15808
 #Flash CFG-TMODE-SVIN_MIN_DUR 0x3c
 #  RAM CFG-TMODE-SVIN_ACC_LIMIT 0xc350       # 5000 mm position accuracy limit
 #Flash CFG-TMODE-SVIN_ACC_LIMIT 0xc350
+#  RAM CFG-MSGOUT-UBX_NAV_SVIN_USB 0x1       # Enables UBX_NAV_SVIN messages on USB
+#Flash CFG-MSGOUT-UBX_NAV_SVIN_USB 0x1
+#  RAM CFG-MSGOUT-UBX_NAV_SVIN_UART1 0x1     # Enables UBX_NAV_SVIN messages on UART1
+#Flash CFG-MSGOUT-UBX_NAV_SVIN_UART1 0x1
 
 # Configuration from Official Config File
   RAM CFG-UART1INPROT-NMEA 0            # Disable NMEA Input on UART1 (it won't expect/decode those messages)
 Flash CFG-UART1INPROT-NMEA 0
   RAM CFG-UART1INPROT-UBX 1             # Enable UBX input on UART1
 Flash CFG-UART1INPROT-UBX 1
-  RAM CFG-UART1INPROT-RTCM3X 0          # Disable RTCM3X input on UART1
+  RAM CFG-UART1INPROT-RTCM3X 0          # Disable RTCM3 input on UART1
 Flash CFG-UART1INPROT-RTCM3X 0
   RAM CFG-UART1OUTPROT-UBX 1            # Enable UBX output on UART1
 Flash CFG-UART1OUTPROT-UBX 1
@@ -60,7 +64,7 @@ Flash CFG-UART1OUTPROT-RTCM3X 1
 Flash CFG-USBINPROT-NMEA 0
   RAM CFG-USBINPROT-UBX 1             # Enable UBX input on USB
 Flash CFG-USBINPROT-UBX 1
-  RAM CFG-USBINPROT-RTCM3X 0          # Disable RTCM3X input on USB
+  RAM CFG-USBINPROT-RTCM3X 0          # Disable RTCM3 input on USB
 Flash CFG-USBINPROT-RTCM3X 0
   RAM CFG-USBOUTPROT-UBX 1            # Enable UBX output on USB
 Flash CFG-USBOUTPROT-UBX 1
@@ -69,6 +73,7 @@ Flash CFG-USBOUTPROT-NMEA 0
   RAM CFG-USBOUTPROT-RTCM3X 1         # Enable RTCM3 output on USB
 Flash CFG-USBOUTPROT-RTCM3X 1
 
+# Enabled RTCM Message Output on UART and USB
   RAM CFG-MSGOUT-RTCM_3X_TYPE1005_UART1 0x1         # Enable RTCM3 1005 Outputs on UART1 w/ output rate 1?
 Flash CFG-MSGOUT-RTCM_3X_TYPE1005_UART1 0x1
   RAM CFG-MSGOUT-RTCM_3X_TYPE1074_UART1 0x1         # Enable RTCM3 1074 Outputs on UART1
@@ -95,12 +100,9 @@ Flash CFG-MSGOUT-RTCM_3X_TYPE1230_USB 0x5
   RAM CFG-MSGOUT-RTCM_3X_TYPE1094_USB 0x1           # Enable RTCM3 1094 Outputs on USB
 Flash CFG-MSGOUT-RTCM_3X_TYPE1094_USB 0x1
 
+
+# Base Station Location for Debug
   RAM CFG-MSGOUT-UBX_NAV_PVT_USB 0x1                # Enables UBX_NAV_PVT messages on USB
 Flash CFG-MSGOUT-UBX_NAV_PVT_USB 0x1
-  RAM CFG-MSGOUT-UBX_NAV_SVIN_USB 0x1               # Enables UBX_NAV_SVIN messages on USB
-Flash CFG-MSGOUT-UBX_NAV_SVIN_USB 0x1
-
   RAM CFG-MSGOUT-UBX_NAV_PVT_UART1 0x1                # Enables UBX_NAV_PVT messages on UART1
 Flash CFG-MSGOUT-UBX_NAV_PVT_UART1 0x1
-  RAM CFG-MSGOUT-UBX_NAV_SVIN_UART1 0x1               # Enables UBX_NAV_SVIN messages on UART1
-Flash CFG-MSGOUT-UBX_NAV_SVIN_UART1 0x1
