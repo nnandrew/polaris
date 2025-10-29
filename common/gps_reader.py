@@ -3,7 +3,10 @@ from serial.tools.list_ports import comports
 from pyubx2 import (
     UBXMessage,
     UBXReader,
-    SET
+    SET,
+    SET_LAYER_RAM,
+    SET_LAYER_BBR,
+    TXN_NONE,
 )
 
 # A dictionary mapping USB Product IDs (PIDs) to receiver information.
@@ -11,7 +14,7 @@ from pyubx2 import (
 # and configure the serial connection with the correct baud rate.
 receiver_by_pid = {
     0x01A7: {"name": "BUDGET",   "model": "u-blox 7",       "vid": 0x1546, "baud":   9600},  
-    0x23A3: {"name": "PREMIUM",  "model": "u-blox M10",     "vid": 0x067B, "baud":   9600},  
+    0x23A3: {"name": "PREMIUM",  "model": "u-blox M10",     "vid": 0x067B, "baud":  38400},  
     0x01A9: {"name": "SPARKFUN", "model": "u-blox ZED-F9P", "vid": 0x1546, "baud":  38400}, 
     0x7523: {"name": "SPARKFUN", "model": "u-blox ZED-FP9", "vid": 0x1A86, "baud": 460800}, # Through Sparkfun CH340C USB-Serial
 }
@@ -67,7 +70,7 @@ class GPSReader:
         """
         return UBXReader(self.ser)
 
-    def get_nav_pvt_config(self):
+    def get_nav_pvt_config(self, uart=False):
         """
         Returns a UBXMessage to configure the receiver to output NAV-PVT
         messages on the USB port.
@@ -75,14 +78,21 @@ class GPSReader:
         Returns:
             UBXMessage: A UBX-CFG-MSG message to enable NAV-PVT output.
         """
-        return UBXMessage(
-            "CFG",
-            "CFG-MSG",
-            SET,
-            msgClass=0x01,     # NAV
-            msgID=0x07,        # PVT (Position Velocity Time Solution)
-            rateUSB=1,         # Enable on USB
-        )
+        if uart:
+            return UBXMessage.config_set(
+                layers=(SET_LAYER_RAM | SET_LAYER_BBR),
+                transaction=TXN_NONE,
+                cfgData=[("CFG_MSGOUT_UBX_NAV_PVT_UART1", 0x1)],
+            )
+        else:
+            return UBXMessage(
+                "CFG",
+                "CFG-MSG",
+                SET,
+                msgClass=0x01,     # NAV
+                msgID=0x07,        # PVT (Position Velocity Time Solution)
+                rateUSB=1,         # Enable on USB
+            )
         
     def close_serial(self):
         """

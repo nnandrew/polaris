@@ -282,24 +282,25 @@ def app():
         case "BUDGET":
             config_msg = gps.get_nav_pvt_config()
         case "PREMIUM":
-            config_msg = gps.get_nav_pvt_config(raw=True)
+            config_msg = gps.get_nav_pvt_config(uart=True)
         case "SPARKFUN":
             config_msg = ubx_config.convert_u_center_config('R_Config.txt')
-            gnss_rtcm_queue = Queue()
-            thread_pool.append(
-                Thread(
-                    target=rtcm_get_thread,
-                    args=(gnss_rtcm_queue, stop_event),
-                    daemon=True
+            if len(sys.argv) > 1 and (sys.argv[1] == "personal" or sys.argv[1] == "public"):
+                gnss_rtcm_queue = Queue()
+                thread_pool.append(
+                    Thread(
+                        target=rtcm_get_thread,
+                        args=(gnss_rtcm_queue, stop_event),
+                        daemon=True
+                    )
                 )
-            )
-            thread_pool.append(
-                Thread(
-                    target=rtcm_process_thread,
-                    args=(gnss_rtcm_queue, gps, stop_event, gps_type, lock),
-                    daemon=True
+                thread_pool.append(
+                    Thread(
+                        target=rtcm_process_thread,
+                        args=(gnss_rtcm_queue, gps, stop_event, gps_type, lock),
+                        daemon=True
+                    )
                 )
-            )
             
     thread_pool.append(
         Thread(
