@@ -175,7 +175,8 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                     
                     point.field("fix_type_int", int(parsed_data.fixType)) \
                         .field("fix_ok_int", int(parsed_data.gnssFixOk)) \
-                        .field('carrier_phase_range_int', int(parsed_data.carrSoln))
+                        .field('carrier_phase_range_int', int(parsed_data.carrSoln)) \
+                        .field('last_correction_age_int', int(parsed_data.lastCorrectionAge))
 
                     # Use the provided timestamp if available, otherwise InfluxDB
                     # will use the current time.

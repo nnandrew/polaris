@@ -894,7 +894,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 3,
         "x": 0,
         "y": 17
       },
@@ -1014,8 +1014,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 4,
+        "w": 3,
+        "x": 3,
         "y": 17
       },
       "id": 27,
@@ -1115,8 +1115,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 8,
+        "w": 3,
+        "x": 6,
         "y": 17
       },
       "id": 28,
@@ -1168,7 +1168,7 @@
           }
         }
       ],
-      "title": "NTRIP Client Status",
+      "title": "NTRIP Status",
       "type": "stat"
     },
     {
@@ -1220,8 +1220,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 12,
+        "w": 3,
+        "x": 9,
         "y": 17
       },
       "id": 26,
@@ -1274,6 +1274,161 @@
         }
       ],
       "title": "RTK Status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P3C6603E967DC8568"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 3,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Not Available"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "< 1"
+                },
+                "2": {
+                  "color": "yellow",
+                  "index": 2,
+                  "text": "< 2"
+                },
+                "3": {
+                  "color": "red",
+                  "index": 3,
+                  "text": "< 5"
+                },
+                "4": {
+                  "color": "red",
+                  "index": 4,
+                  "text": "< 10"
+                },
+                "5": {
+                  "color": "red",
+                  "index": 5,
+                  "text": "< 15"
+                },
+                "6": {
+                  "color": "red",
+                  "index": 6,
+                  "text": "< 20"
+                },
+                "7": {
+                  "color": "red",
+                  "index": 7,
+                  "text": "< 30"
+                },
+                "8": {
+                  "color": "red",
+                  "index": 8,
+                  "text": "< 45"
+                },
+                "9": {
+                  "color": "red",
+                  "index": 9,
+                  "text": "< 60"
+                },
+                "10": {
+                  "color": "red",
+                  "index": 10,
+                  "text": "< 90"
+                },
+                "11": {
+                  "color": "red",
+                  "index": 11,
+                  "text": "< 120"
+                },
+                "12": {
+                  "color": "red",
+                  "index": 12,
+                  "text": "> 120"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 17
+      },
+      "id": 29,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.1",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P07ECAE0F45840A9F"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  last_correction_age_int\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND last_correction_age_int IS NOT NULL\nORDER BY\n  time\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Correction Age",
       "type": "stat"
     },
     {
@@ -2195,14 +2350,14 @@
     }
   ],
   "preload": false,
-  "refresh": "1s",
+  "refresh": "",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1m",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {
@@ -2222,5 +2377,5 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "deiu8hvipbo5cb",
-  "version": 3
+  "version": 2
 }
