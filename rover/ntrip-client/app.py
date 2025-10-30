@@ -67,15 +67,15 @@ def influx_client_write_worker(records):
         elif type(records) is Point:
             payload = records.to_line_protocol()
         else:
-            print(f"{'rtcm_process_thread':<20}: Invalid record type for InfluxDB write.")
+            print(f"{'influx_writer':<20}: Invalid record type for InfluxDB write.")
             return
         response = requests.post(url, headers=headers, data=payload)
         if response.status_code != 204:
-            print(f"{'rtcm_process_thread':<20}: Influx write error: {response.status_code} - {response.text}")
+            print(f"{'influx_writer':<20}: Influx write error: {response.status_code} - {response.text}")
             return
-        print(f"{'rtcm_process_thread':<20}: InfluxDB write successful. {len(payload.encode(encoding='utf-8'))} bytes sent.")
+        print(f"{'influx_writer':<20}: InfluxDB write successful. {len(payload.encode(encoding='utf-8'))} bytes sent.")
     except Exception as err:
-        print(f"{'rtcm_process_thread':<20}: InfluxDB write error: {err}")
+        print(f"{'influx_writer':<20}: InfluxDB write error: {err}")
 
 def influx_client_write(records):
     """
@@ -238,6 +238,7 @@ def app():
     # Configure the GPS reader based on the detected hardware type.
     gps = gps_reader.GPSReader()
     gps_type = gps.gps_type
+    gnc = None
     match gps_type:
         case "BUDGET":
             config_msg = gps.get_nav_pvt_config()
