@@ -1,3 +1,5 @@
 flask
 ruamel.yaml
 requests
+influxdb3-python
+dotenv

@@ -2,7 +2,7 @@ import os
 import dotenv
 import requests
 from threading import Thread
-from influxdb_client import Point, WritePrecision
+from influxdb_client import Point
 
 def write_worker(records):   
     """

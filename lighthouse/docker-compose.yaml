@@ -6,8 +6,10 @@ services:
     environment:
       - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}  
       - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
+      - INFLUXDB_TOKEN=apiv3_${LIGHTHOUSE_ADMIN_PASSWORD}
     volumes:
       - ./shared:/home/enrollment-server/shared
+      - ../common:/common                       # Common Python files
     restart: unless-stopped
   nebula:
     image: nebulaoss/nebula:latest
