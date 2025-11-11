@@ -5,14 +5,22 @@ This module provides functionality to dynamically generate Nebula configuration
 files for nodes joining the mesh network. It uses the `nebula-cert` utility to
 create certificates and keys, and persists host information in a SQLite database.
 """
-import os
+
+from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarString
+from influxdb_client_3 import Point
+from flask import current_app
+import concurrent.futures
+import ruamel.yaml
 import subprocess
 import sqlite3
-import ruamel.yaml
-from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarString
-from flask import current_app
-import subprocess
-import concurrent.futures
+import time
+import sys
+import os
+try:
+    from common import influx_client
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../common")
+    import influx_client
 
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True 
@@ -150,12 +158,12 @@ def ping_host(vpn_ip):
             # Parse ping output for rtt min/avg/max/mdev
             for line in result.stdout.splitlines():
                 if "rtt" in line:
-                    ping_status = f"{float(line.split('/')[-2]):4.0f} ms"
+                    ping_status = float(line.split('/')[-2])
                     break
         else:
-            ping_status = "   down"
+            ping_status = -1.0
     except Exception:
-        ping_status = "  error"
+        ping_status = -2.0
     return ping_status
 
 def get_hosts(ping=False):
@@ -191,6 +199,24 @@ def get_hosts(ping=False):
             hosts_with_status.append(row + ("    ...",))
 
     return hosts_with_status
+
+def monitor_hosts():
+    """
+    Monitors all hosts by pinging them every 5 seconds and logging their status.
+    """
+    
+    while True:
+        hosts = get_hosts(ping=True)
+        records = []
+        for host in hosts:
+            records.append(
+                Point("network_telemetry").tag("id", int(host[0])) \
+                                          .tag("vpn_ip", str(host[1])) \
+                                          .tag("group_name", str(host[2])) \
+                                          .field("ping", float(host[3])) \
+                                          .time(int(time.time()))
+            )
+        influx_client.write(records)
 
 def remove_host(host_id):
     """

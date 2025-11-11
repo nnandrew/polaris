@@ -5,14 +5,15 @@ This module is responsible for creating and configuring the Flask application,
 as well as performing essential one-time setup tasks for the Lighthouse.
 """
 
-import subprocess
-import os
-import tarfile
-import sqlite3
-import requests
-import flask
+from threading import Thread
 from .routes import main_bp 
 from app import nebula
+import subprocess
+import requests
+import tarfile
+import sqlite3
+import flask
+import os
 
 def create_app():
     """
@@ -78,5 +79,7 @@ def create_app():
         conn.close()
         config_path = nebula.generate_nebula_config(group_name="lighthouse", public_ip=app.config.get('LIGHTHOUSE_PUBLIC_IP'))
         print(f"Lighthouse Configuration Generated at {config_path}.")   
+        
+    Thread(target=nebula.monitor_hosts).start()
 
     return app

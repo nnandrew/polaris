@@ -45,7 +45,7 @@ def enroll():
             
         if host_id is None:
             return "Enrollment failed", 400
-        return flask.redirect(flask.url_for('main.download_config', host_id=host_id, LIGHTHOUSE_ADMIN_PASSWORD=network_key))
+        return flask.redirect(flask.url_for('main.download_nebula_config', host_id=host_id, LIGHTHOUSE_ADMIN_PASSWORD=network_key))
     else:
         # Manual enrollment via admin panel
         if not flask.session.get('logged_in'):
@@ -152,8 +152,8 @@ def rename():
         nebula.rename_group(host_id, new_group_name)
     return flask.redirect(flask.url_for('main.admin'))
 
-@main_bp.route('/api/download_config', methods=['GET', 'POST'])
-def download_config():
+@main_bp.route('/api/download_nebula_config', methods=['GET', 'POST'])
+def download_nebula_config():
     """
     Downloads the Nebula config file for a specific host. Requires admin session or token.
     

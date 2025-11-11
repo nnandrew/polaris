@@ -6,4 +6,5 @@
 data/
 nebula/
 shared/
+venv/
 __pycache__/
