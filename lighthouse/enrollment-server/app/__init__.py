@@ -5,6 +5,7 @@ This module is responsible for creating and configuring the Flask application,
 as well as performing essential one-time setup tasks for the Lighthouse.
 """
 
+from influxdb_client_3 import Point
 from threading import Thread
 from .routes import main_bp 
 from app import nebula
@@ -13,7 +14,32 @@ import requests
 import tarfile
 import sqlite3
 import flask
+import time
+import sys
 import os
+try:
+    from .common import influx_client
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../common")
+    import influx_client
+
+def monitor_hosts():
+    """
+    Monitors all hosts by pinging them every 5 seconds and logging their status.
+    """
+    
+    while True:
+        hosts = nebula.get_hosts(ping=True)
+        records = []
+        for host in hosts:
+            records.append(
+                Point("network_telemetry").tag("id", int(host[0])) \
+                                          .tag("vpn_ip", str(host[1])) \
+                                          .tag("group_name", str(host[2])) \
+                                          .field("ping", float(host[3])) \
+                                          .time(int(time.time()))
+            )
+        influx_client.write(records)
 
 def create_app():
     """
@@ -80,6 +106,7 @@ def create_app():
         config_path = nebula.generate_nebula_config(group_name="lighthouse", public_ip=app.config.get('LIGHTHOUSE_PUBLIC_IP'))
         print(f"Lighthouse Configuration Generated at {config_path}.")   
         
+    # Start Nebula Host Monitor Thread
     Thread(target=nebula.monitor_hosts).start()
 
     return app

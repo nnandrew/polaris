@@ -7,20 +7,12 @@ create certificates and keys, and persists host information in a SQLite database
 """
 
 from ruamel.yaml.scalarstring import LiteralScalarString, DoubleQuotedScalarString
-from influxdb_client_3 import Point
 from flask import current_app
 import concurrent.futures
 import ruamel.yaml
 import subprocess
 import sqlite3
-import time
-import sys
 import os
-try:
-    from common import influx_client
-except ImportError:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../common")
-    import influx_client
 
 yaml = ruamel.yaml.YAML()
 yaml.preserve_quotes = True 
@@ -199,24 +191,6 @@ def get_hosts(ping=False):
             hosts_with_status.append(row + ("    ...",))
 
     return hosts_with_status
-
-def monitor_hosts():
-    """
-    Monitors all hosts by pinging them every 5 seconds and logging their status.
-    """
-    
-    while True:
-        hosts = get_hosts(ping=True)
-        records = []
-        for host in hosts:
-            records.append(
-                Point("network_telemetry").tag("id", int(host[0])) \
-                                          .tag("vpn_ip", str(host[1])) \
-                                          .tag("group_name", str(host[2])) \
-                                          .field("ping", float(host[3])) \
-                                          .time(int(time.time()))
-            )
-        influx_client.write(records)
 
 def remove_host(host_id):
     """
