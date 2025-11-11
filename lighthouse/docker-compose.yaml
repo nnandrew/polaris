@@ -1,6 +1,10 @@
 services:
   enrollment-server:
-    build: ./enrollment-server
+    build: 
+      context: ./enrollment-server
+      dockerfile: dockerfile
+      additional_contexts:
+        common: ../common
     # image: polaris/enrollment-server:latest  # FOR FINAL DELIVERABLE
     container_name: enrollment-server
     environment:
@@ -9,7 +13,6 @@ services:
       - INFLUXDB_TOKEN=apiv3_${LIGHTHOUSE_ADMIN_PASSWORD}
     volumes:
       - ./shared:/home/enrollment-server/shared
-      - ../common:/common                       # Common Python files
     restart: unless-stopped
   nebula:
     image: nebulaoss/nebula:latest
