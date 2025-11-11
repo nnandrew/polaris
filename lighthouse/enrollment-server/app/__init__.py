@@ -107,6 +107,6 @@ def create_app():
         print(f"Lighthouse Configuration Generated at {config_path}.")   
         
     # Start Nebula Host Monitor Thread
-    Thread(target=nebula.monitor_hosts).start()
+    Thread(target=monitor_hosts).start()
 
     return app
