@@ -186,9 +186,6 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock, influx_save):
                             point.field("latitude", parsed_data.lat) \
                                  .field("longitude", parsed_data.lon)
                         point.field("altitude_m", parsed_data.hMSL/1000) \
-
-
-
                             .field("ground_speed_ms", parsed_data.gSpeed / 1000) \
                             .field("ground_heading_deg", parsed_data.headMot) \
                             .field("horizontal_accuracy_m", parsed_data.hAcc/1000) \
