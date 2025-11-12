@@ -22,6 +22,7 @@ import sys
 import queue
 import dotenv
 import requests
+import pytz
 from time import sleep
 from pygnssutils import GNSSNTRIPClient
 from pygnssutils.gnssntripclient import GGAFIXED
@@ -87,6 +88,26 @@ def influx_client_write(records):
     """
     Thread(target=influx_client_write_worker, args=(records,), daemon=True).start()
 
+def influx_client_delete(seconds):
+    """
+    Function to delete recent records.
+
+    Args:
+        seconds (int): The last amount of seconds to delete.
+    """
+    records = []
+    now = datetime.now().timestamp()
+    print(int(now))
+    for i in range(seconds):
+        new_time = int(now) - i
+        print(new_time)
+        point = Point("metrics").tag("device", "SPARKFUN")
+        point.field("latitude", float(0)) \
+             .field("longitude", float(0)) \
+             .time(int(new_time))
+        records.append(point)
+    influx_client_write(records)
+
 def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
     """
     Reads RTCM3 data from a queue and sends it to the GPS device.
@@ -133,7 +154,7 @@ def rtcm_process_thread(gnss_rtcm_queue, gps, stop_event, gps_type, lock):
             continue
     print(f"{'rtcm_process_thread':<20}: Exiting.")
 
-def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
+def read_messages_thread(stop_event, ubx_reader, gps_type, lock, influx_save):
     """
     Reads parsed UBX NAV-PVT data from the GPS and writes it to InfluxDB.
 
@@ -161,9 +182,13 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                     point = Point("metrics").tag("device", gps_type)
 
                     if parsed_data.gnssFixOk:
-                        point.field("latitude", parsed_data.lat) \
-                            .field("longitude", parsed_data.lon) \
-                            .field("altitude_m", parsed_data.hMSL/1000) \
+                        if influx_save.is_set():
+                            point.field("latitude", parsed_data.lat) \
+                                 .field("longitude", parsed_data.lon)
+                        point.field("altitude_m", parsed_data.hMSL/1000) \
+
+
+
                             .field("ground_speed_ms", parsed_data.gSpeed / 1000) \
                             .field("ground_heading_deg", parsed_data.headMot) \
                             .field("horizontal_accuracy_m", parsed_data.hAcc/1000) \
@@ -188,12 +213,11 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
                         )
                         point.time(int(dt.timestamp()))
                         print(f"{'read_messages_thread':<20}: Timestamp: {dt.isoformat()}")
-
                     influx_client_write(point)
                 except Exception as e:
                     print(f"{'read_messages_thread':<20}: Error: {e}. Re-initializing...")
             elif parsed_data and parsed_data.identity == 'RXM-RTCM':
-                print(f"{'read_messages_thread:':<20}: DEBUG: {parsed_data}")
+                # print(f"{'read_messages_thread:':<20}: DEBUG: {parsed_data}")
                 pass
             elif parsed_data:
                 # print(f'IDK This data: {parsed_data}')
@@ -203,18 +227,31 @@ def read_messages_thread(stop_event, ubx_reader, gps_type, lock):
             continue
 
 def get_current_utc_time():
-    current_time = datetime.now(timezone.utc)
-    print(current_time)
+    current_time = datetime.now(pytz.timezone("US/Central"))
     return current_time
 
-def stopwatch(stop_event):
+def stopwatch(stop_event, influx_save):
     while not stop_event.is_set():
-        input("Press Enter to start the stopwatch...\n")
-        start_utc = get_current_utc_time()
-        input('Press Enter to stop the stopwatch...\n')
-        finish_utc = get_current_utc_time()
-        diff = finish_utc - start_utc
-        print(diff.total_seconds())
+        usr_input= input("Polling input...\n")
+        if usr_input == 's':
+            print('Starting Stop watch')
+            start_utc = get_current_utc_time()
+            input('Press Enter to stop the stopwatch...\n')
+            finish_utc = get_current_utc_time()
+            diff = finish_utc - start_utc
+            print(f'Start time: {start_utc}')
+            print(f'Finish time: {finish_utc}')
+            print(f'Diff: {diff.total_seconds()}')
+        elif usr_input == '':
+            influx_save.clear()
+            input('Press Enter to resume writing to influx...\n')
+            influx_save.set()
+        elif usr_input == '\\':
+            influx_save.clear()
+            print('Deleting last 60seconds from influx')
+            influx_client_delete(60)
+            influx_save.set()
+
 
 def app():
     """
@@ -268,22 +305,26 @@ def app():
                         daemon=True
                     )
                 )
-            
+
+    influx_save = Event()
+    influx_save.set()
+    if influx_save.is_set():
+        print("InfluxDB Client is already running.")
     thread_pool.append(
         Thread(
             target=read_messages_thread,
-            args=(stop_event, gps.get_reader(), gps_type, lock),
+            args=(stop_event, gps.get_reader(), gps_type, lock, influx_save),
         )
     )
     
     # Uncomment the following to include a stopwatch in the CLI.
-    # thread_pool.append(
-    #     Thread(
-    #         target=stopwatch,
-    #         args=(stop_event,),
-    #         daemon=True
-    #     )
-    # )
+    thread_pool.append(
+        Thread(
+            target=stopwatch,
+            args=(stop_event,influx_save),
+            daemon=True
+        )
+    )
 
     # Configure the receiver with the appropriate settings.
     try:
