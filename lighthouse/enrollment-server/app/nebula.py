@@ -141,7 +141,7 @@ def ping_host(vpn_ip):
     """
     try:
         result = subprocess.run(
-            ["ping", "-c", "1", "-W", "5", vpn_ip],
+            ["ping", "-c", "1", "-W", "3", vpn_ip],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,

@@ -18,10 +18,10 @@ import time
 import sys
 import os
 try:
-    from .common import influx_client
+    from .common.influx_client import InfluxWriter
 except ImportError:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../common")
-    import influx_client
+    from influx_client import InfluxWriter
 
 def monitor_hosts():
     """
@@ -39,7 +39,7 @@ def monitor_hosts():
                                           .field("ping", float(host[3])) \
                                           .time(int(time.time()))
             )
-        influx_client.write(records)
+        InfluxWriter.async_write(records)
 
 def create_app():
     """

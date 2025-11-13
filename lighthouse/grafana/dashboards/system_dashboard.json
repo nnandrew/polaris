@@ -31,7 +31,7 @@
       },
       "id": 3,
       "panels": [],
-      "title": "Rover Metrics",
+      "title": "Rover Debug",
       "type": "row"
     },
     {
@@ -119,11 +119,11 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 16,
+        "w": 15,
         "x": 0,
         "y": 1
       },
-      "id": 9,
+      "id": 32,
       "options": {
         "legend": {
           "calcs": [],
@@ -296,11 +296,11 @@
       },
       "gridPos": {
         "h": 20,
-        "w": 8,
-        "x": 16,
+        "w": 9,
+        "x": 15,
         "y": 1
       },
-      "id": 1,
+      "id": 33,
       "options": {
         "basemap": {
           "config": {
@@ -324,13 +324,12 @@
         "layers": [
           {
             "config": {
-              "arrow": 1,
+              "showLegend": false,
               "style": {
                 "color": {
                   "fixed": "dark-green"
                 },
-                "lineWidth": 2,
-                "opacity": 1,
+                "opacity": 0.4,
                 "rotation": {
                   "fixed": 0,
                   "max": 360,
@@ -350,6 +349,11 @@
                   "horizontal": "center",
                   "vertical": "center"
                 },
+                "text": {
+                  "field": "",
+                  "fixed": "",
+                  "mode": "field"
+                },
                 "textConfig": {
                   "fontSize": 12,
                   "offsetX": 0,
@@ -364,10 +368,13 @@
               "options": "A"
             },
             "layer-tooltip": false,
+            "location": {
+              "mode": "auto"
+            },
             "name": "Historical",
             "opacity": 0.9,
             "tooltip": false,
-            "type": "route"
+            "type": "markers"
           },
           {
             "config": {
@@ -425,9 +432,9 @@
           "allLayers": true,
           "id": "fit",
           "lastOnly": false,
-          "lat": 30.290121,
+          "lat": 30.283037,
           "layer": "Layer 1",
-          "lon": -97.743224,
+          "lon": -97.737981,
           "zoom": 18
         }
       },
@@ -441,6 +448,7 @@
           },
           "editorMode": "code",
           "format": "table",
+          "hide": false,
           "rawQuery": true,
           "rawSql": "SELECT\r\n  time,\r\n  latitude,\r\n  longitude\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time\r\n",
           "refId": "A",
@@ -469,7 +477,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "hide": false,
+          "hide": true,
           "rawQuery": true,
           "rawSql": "SELECT\r\n  time,\r\n  latitude,\r\n  longitude,\r\n  ground_heading_deg * 100000 AS ground_heading_deg\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time)\r\nORDER BY\r\n  time DESC\r\nLIMIT 1\r\n\r\n",
           "refId": "B",
@@ -587,7 +595,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 16,
+        "w": 15,
         "x": 0,
         "y": 9
       },
@@ -617,7 +625,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\r\n  time,\r\n  altitude_m,\r\n  altitude_m + vertical_accuracy_m AS upper_bound,\r\n  altitude_m - vertical_accuracy_m AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time",
+          "rawSql": "SELECT\r\n  time,\r\n  altitude_m,\r\n  altitude_m + vertical_accuracy_m AS upper_bound,\r\n  altitude_m - vertical_accuracy_m AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time)\r\nORDER BY\r\n  time",
           "refId": "value",
           "sql": {
             "columns": [
@@ -765,7 +773,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 16,
+        "w": 15,
         "x": 0,
         "y": 13
       },
@@ -795,7 +803,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\r\n  time,\r\n  ground_speed_ms,\r\n  ground_speed_ms + speed_accuracy_ms AS upper_bound,\r\n  GREATEST(ground_speed_ms - speed_accuracy_ms, 0) AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time",
+          "rawSql": "SELECT\r\n  time,\r\n  ground_speed_ms,\r\n  ground_speed_ms + speed_accuracy_ms AS upper_bound,\r\n  GREATEST(ground_speed_ms - speed_accuracy_ms, 0) AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) \r\nORDER BY\r\n  time",
           "refId": "value",
           "sql": {
             "columns": [
@@ -1130,7 +1138,7 @@
           "calcs": [
             "last"
           ],
-          "fields": "/^ntrip_client_rtcm_recieved_int$/",
+          "fields": "/^ntrip_client_rtcm_received_int$/",
           "values": false
         },
         "showPercentChange": false,
@@ -1148,7 +1156,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ntrip_client_rtcm_recieved_int\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND ntrip_client_rtcm_recieved_int IS NOT NULL\nORDER BY\n  time\n",
+          "rawSql": "SELECT\n  ntrip_client_rtcm_received_int\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND ntrip_client_rtcm_received_int IS NOT NULL\nORDER BY\n  time\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1375,7 +1383,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 3,
         "x": 12,
         "y": 17
       },
@@ -1432,7 +1440,7 @@
       "type": "stat"
     },
     {
-      "collapsed": false,
+      "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1440,520 +1448,195 @@
         "y": 21
       },
       "id": 8,
+      "panels": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P07ECAE0F45840A9F"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "latitude"
+                },
+                "properties": []
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 71
+          },
+          "id": 21,
+          "options": {
+            "basemap": {
+              "config": {
+                "server": "streets",
+                "showLabels": true,
+                "theme": "auto"
+              },
+              "name": "Layer 0",
+              "opacity": 1,
+              "tooltip": false,
+              "type": "osm-standard"
+            },
+            "controls": {
+              "mouseWheelZoom": true,
+              "showAttribution": false,
+              "showDebug": false,
+              "showMeasure": true,
+              "showScale": true,
+              "showZoom": true
+            },
+            "layers": [
+              {
+                "config": {
+                  "showLegend": false,
+                  "style": {
+                    "color": {
+                      "fixed": "dark-blue"
+                    },
+                    "opacity": 1,
+                    "rotation": {
+                      "fixed": 0,
+                      "max": 360,
+                      "min": -360,
+                      "mode": "mod"
+                    },
+                    "size": {
+                      "fixed": 15,
+                      "max": 15,
+                      "min": 2
+                    },
+                    "symbol": {
+                      "fixed": "img/icons/unicons/wifi.svg",
+                      "mode": "fixed"
+                    },
+                    "symbolAlign": {
+                      "horizontal": "center",
+                      "vertical": "center"
+                    },
+                    "text": {
+                      "field": "",
+                      "fixed": "",
+                      "mode": "field"
+                    },
+                    "textConfig": {
+                      "fontSize": 12,
+                      "offsetX": 0,
+                      "offsetY": 0,
+                      "textAlign": "center",
+                      "textBaseline": "middle"
+                    }
+                  }
+                },
+                "filterData": {
+                  "id": "byRefId",
+                  "options": "B"
+                },
+                "location": {
+                  "mode": "auto"
+                },
+                "name": "Current Location",
+                "tooltip": true,
+                "type": "markers"
+              }
+            ],
+            "tooltip": {
+              "mode": "details"
+            },
+            "view": {
+              "allLayers": true,
+              "id": "fit",
+              "lastOnly": false,
+              "lat": 30.290121,
+              "layer": "Layer 1",
+              "lon": -97.743224,
+              "zoom": 18
+            }
+          },
+          "pluginVersion": "12.1.1",
+          "targets": [
+            {
+              "dataset": "iox",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "deiu3gixpm51cf"
+              },
+              "editorMode": "code",
+              "format": "table",
+              "hide": false,
+              "rawQuery": true,
+              "rawSql": "SELECT\r\n  time,\r\n  latitude,\r\n  longitude,\r\n  ground_heading_deg * 100000 AS ground_heading_deg\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time)\r\nORDER BY\r\n  time DESC\r\nLIMIT 1\r\n\r\n",
+              "refId": "B",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ]
+              }
+            }
+          ],
+          "title": "Live View",
+          "type": "geomap"
+        }
+      ],
+      "title": "Base Station Debug",
+      "type": "row"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 23,
       "panels": [],
-      "title": "Base Station Metrics",
+      "title": "Network Telemetry",
       "type": "row"
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "dark-red",
-            "mode": "continuous-BlPu"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 50,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "linearThreshold": 0.125,
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "GNSS Receive"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "RTCM Generation"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 16,
-        "x": 0,
-        "y": 22
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "queryType": "randomWalk",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "hide": false,
-          "queryType": "randomWalk",
-          "refId": "B"
-        }
-      ],
-      "title": "Latency (Time to Output RTCM)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 3,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "rothz"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "horizontal_accuracy_m"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Receiver Estimate"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 16,
-        "y": 22
-      },
-      "id": 20,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/^processing_frequency$/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
-      "title": "Raw GNSS Receive Rate",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 3,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "rothz"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "horizontal_accuracy_m"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Receiver Estimate"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 20,
-        "y": 22
-      },
-      "id": 16,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/^processing_frequency$/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
-      "title": "RTCM Generation Rate",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 3,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "rothz"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "horizontal_accuracy_m"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Receiver Estimate"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 16,
-        "y": 26
-      },
-      "id": 15,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/^processing_frequency$/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "queryType": "randomWalk",
-          "refId": "A"
-        }
-      ],
-      "title": "RTCM Send Rate",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "dark-red",
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 50,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "linearThreshold": 0.125,
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Visible"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "dark-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Used"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "dark-green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 16,
-        "x": 0,
-        "y": 30
-      },
-      "id": 24,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "queryType": "randomWalk",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "hide": false,
-          "queryType": "randomWalk",
-          "refId": "B"
-        }
-      ],
-      "title": "Satellites",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
         "type": "influxdb",
-        "uid": "P07ECAE0F45840A9F"
+        "uid": "P3C6603E967DC8568"
       },
       "fieldConfig": {
         "defaults": {
@@ -1961,12 +1644,15 @@
             "mode": "thresholds"
           },
           "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false,
+            "minWidth": 50
           },
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1982,120 +1668,202 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "latitude"
+              "options": "ping (lastNotNull)"
             },
-            "properties": []
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 100
+                    },
+                    {
+                      "color": "red",
+                      "value": 500
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "-1": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "Down"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Trend"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "drawStyle": "line",
+                  "gradientMode": "hue",
+                  "hideValue": true,
+                  "lineStyle": {
+                    "dash": [
+                      10,
+                      10
+                    ],
+                    "fill": "solid"
+                  },
+                  "spanNulls": false,
+                  "type": "sparkline"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Average"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "from": -2,
+                      "result": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "Down"
+                      },
+                      "to": 0
+                    },
+                    "type": "range"
+                  }
+                ]
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 100
+                    },
+                    {
+                      "color": "red",
+                      "value": 1000
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "VPN IP"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
           }
         ]
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 30
+        "w": 10,
+        "x": 0,
+        "y": 23
       },
-      "id": 21,
+      "id": 30,
       "options": {
-        "basemap": {
-          "config": {
-            "server": "streets",
-            "showLabels": true,
-            "theme": "auto"
-          },
-          "name": "Layer 0",
-          "opacity": 1,
-          "tooltip": false,
-          "type": "osm-standard"
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "controls": {
-          "mouseWheelZoom": true,
-          "showAttribution": false,
-          "showDebug": false,
-          "showMeasure": true,
-          "showScale": true,
-          "showZoom": true
-        },
-        "layers": [
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
           {
-            "config": {
-              "showLegend": false,
-              "style": {
-                "color": {
-                  "fixed": "dark-blue"
-                },
-                "opacity": 1,
-                "rotation": {
-                  "fixed": 0,
-                  "max": 360,
-                  "min": -360,
-                  "mode": "mod"
-                },
-                "size": {
-                  "fixed": 15,
-                  "max": 15,
-                  "min": 2
-                },
-                "symbol": {
-                  "fixed": "img/icons/unicons/wifi.svg",
-                  "mode": "fixed"
-                },
-                "symbolAlign": {
-                  "horizontal": "center",
-                  "vertical": "center"
-                },
-                "text": {
-                  "field": "",
-                  "fixed": "",
-                  "mode": "field"
-                },
-                "textConfig": {
-                  "fontSize": 12,
-                  "offsetX": 0,
-                  "offsetY": 0,
-                  "textAlign": "center",
-                  "textBaseline": "middle"
-                }
-              }
-            },
-            "filterData": {
-              "id": "byRefId",
-              "options": "B"
-            },
-            "location": {
-              "mode": "auto"
-            },
-            "name": "Current Location",
-            "tooltip": true,
-            "type": "markers"
+            "desc": true,
+            "displayName": "ping"
           }
-        ],
-        "tooltip": {
-          "mode": "details"
-        },
-        "view": {
-          "allLayers": true,
-          "id": "fit",
-          "lastOnly": false,
-          "lat": 30.290121,
-          "layer": "Layer 1",
-          "lon": -97.743224,
-          "zoom": 18
-        }
+        ]
       },
       "pluginVersion": "12.1.1",
       "targets": [
         {
           "dataset": "iox",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "deiu3gixpm51cf"
-          },
           "editorMode": "code",
           "format": "table",
-          "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\r\n  time,\r\n  latitude,\r\n  longitude,\r\n  ground_heading_deg * 100000 AS ground_heading_deg\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time)\r\nORDER BY\r\n  time DESC\r\nLIMIT 1\r\n\r\n",
-          "refId": "B",
+          "rawSql": "SELECT\n  time,\n  id::BIGINT,\n  vpn_ip,\n  group_name,\n  ping,\n  ping AS ping_avg,\n  ping AS ping_trend\nFROM network_telemetry\nWHERE $__timeFilter(time)\nORDER BY time ASC",
+          "refId": "A",
           "sql": {
             "columns": [
               {
@@ -2106,258 +1874,150 @@
             "groupBy": [
               {
                 "property": {
+                  "name": "group_name",
                   "type": "string"
                 },
                 "type": "groupBy"
               }
-            ]
-          }
-        }
-      ],
-      "title": "Live View",
-      "type": "geomap"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 38
-      },
-      "id": 23,
-      "panels": [],
-      "title": "Time Invariant Metrics",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "dark-red",
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "linearThreshold": 0.125,
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
+            ],
+            "whereJsonTree": {
+              "children1": [
+                {
+                  "id": "8a988ab8-4567-489a-bcde-f19a7555e616",
+                  "properties": {
+                    "fieldSrc": "field",
+                    "value": [],
+                    "valueSrc": []
+                  },
+                  "type": "rule"
+                }
+              ],
+              "id": "99ab9998-0123-4456-b89a-b19a754fdbfc",
+              "type": "group"
             }
           },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          "table": "network_telemetry"
+        }
+      ],
+      "title": "",
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
               {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "RTCM Processing"
+                "desc": false,
+                "field": "network_telemetry.id"
               }
             ]
           }
-        ]
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 0,
-        "y": 39
-      },
-      "id": 22,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
         {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "hide": false,
-          "queryType": "randomWalk",
-          "refId": "B"
-        }
-      ],
-      "title": "CEP95 vs. Distance from Base Station",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "dark-red",
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "linearThreshold": 0.125,
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "Average": {
+                "aggregations": [
+                  "mean"
+                ],
+                "operation": "aggregate"
+              },
+              "Mean": {
+                "aggregations": [
+                  "allValues"
+                ],
+                "operation": "aggregate"
+              },
+              "group_name": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "id": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "network_telemetry.id": {
+                "aggregations": []
+              },
+              "ping": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "ping2": {
+                "aggregations": [
+                  "allValues"
+                ],
+                "operation": "aggregate"
+              },
+              "ping_avg": {
+                "aggregations": [
+                  "mean"
+                ],
+                "operation": "aggregate"
+              },
+              "ping_trend": {
+                "aggregations": [
+                  "allValues"
+                ],
+                "operation": "aggregate"
+              },
+              "time": {
+                "aggregations": []
+              },
+              "trailing moving mean(ping)": {
+                "aggregations": []
+              },
+              "vpn_ip": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
             }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "RTCM Processing"
-              }
-            ]
           }
-        ]
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 12,
-        "y": 39
-      },
-      "id": 25,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
         {
-          "datasource": {
-            "type": "datasource",
-            "uid": "grafana"
-          },
-          "hide": false,
-          "queryType": "randomWalk",
-          "refId": "B"
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Average (lastNotNull)": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "group_name": 1,
+              "ping (lastNotNull)": 2,
+              "ping_avg (mean)": 3,
+              "ping_trend (allValues)": 4,
+              "vpn_ip": 0
+            },
+            "renameByName": {
+              "Average (lastNotNull)": "Average",
+              "Mean (lastNotNull)": "Average",
+              "group_name": "Node Name",
+              "ping (lastNotNull)": "Ping",
+              "ping2 (allValues)": "Trend",
+              "ping_avg": "Average",
+              "ping_avg (mean)": "Average",
+              "ping_trend": "Trend",
+              "ping_trend (allValues)": "Trend",
+              "vpn_ip": "VPN IP"
+            }
+          }
         }
       ],
-      "title": "Pending Comparison",
-      "type": "timeseries"
+      "type": "table"
     }
   ],
   "preload": false,
-  "refresh": "",
+  "refresh": "auto",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -2377,5 +2037,5 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "deiu8hvipbo5cb",
-  "version": 2
+  "version": 4
 }

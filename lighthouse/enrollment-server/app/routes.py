@@ -38,9 +38,9 @@ def enroll():
         if not group_name:
             return "Missing group_name", 400
         
-        if group_name == "rover":
+        if group_name.startswith("rover"):
             host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'))
-        elif group_name == "base_station":
+        elif group_name.startswith("base-station"):
             host_id = 2  # Fixed IP for base station
             
         if host_id is None:
