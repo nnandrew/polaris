@@ -37,7 +37,7 @@ def monitor_hosts():
                                           .tag("vpn_ip", str(host[1])) \
                                           .tag("group_name", str(host[2])) \
                                           .field("ping", float(host[3])) \
-                                          .time(int(time.time()))
+                                          .time(int(time.time()*1e9))
             )
         InfluxWriter.async_write(records)
 
