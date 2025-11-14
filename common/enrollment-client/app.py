@@ -14,13 +14,15 @@ The client requires the following environment variables to be set:
 The script will place the received `config.yml` in the `./shared/` directory,
 where it can be used by the Nebula service.
 """
+
 import os
 import time
-import dotenv
 import logging  
-import requests 
-import subprocess
 import platform
+import subprocess
+
+import dotenv
+import requests 
 
 BACKOFF_TIME = 5
 
@@ -51,11 +53,15 @@ if __name__ == '__main__':
     LIGHTHOUSE_GROUP_NAME = os.getenv("LIGHTHOUSE_GROUP_NAME")
     logging.info("Environment Variables Loaded.")
     
+    # Load Device Variables
+    DEVICE_NAME = platform.node()
+    DEVICE_OS = platform.platform()
+
     # Attempt to enroll with the Lighthouse until a configuration is received.
     url = f"https://{LIGHTHOUSE_HOSTNAME}/api/enroll"
     params = {
         "LIGHTHOUSE_ADMIN_PASSWORD": LIGHTHOUSE_ADMIN_PASSWORD,
-        "group_name": LIGHTHOUSE_GROUP_NAME
+        "group_name": f"{LIGHTHOUSE_GROUP_NAME}_{DEVICE_NAME}_{DEVICE_OS}",
     }
     config_path = "./shared/config.yml"
     

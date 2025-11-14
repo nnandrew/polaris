@@ -1,8 +1,7 @@
-from serial import Serial
 from serial.tools.list_ports import comports
+from serial import Serial
 from pyubx2 import (
     UBXMessage,
-    UBXReader,
     SET,
     SET_LAYER_RAM,
     SET_LAYER_BBR,
@@ -32,11 +31,13 @@ class GPSReader:
     
     ser = None
     port = None
+    baud = 9600
     gps_type = None
 
     def __init__(self):
         """
-        Initializes the GPSReader and connects to the first available GPS device.
+        Initializes the GPSReader and connects to the first available GPS 
+        devicebased on the VID and PID.
 
         Raises:
             RuntimeError: If no suitable serial port is found.
@@ -46,35 +47,28 @@ class GPSReader:
         pid_list = receiver_by_pid.keys()
         for port in comports():
             try:
-                # If the VID and PID match a known device, open a serial connection.
-                print(f'Vid: {port.vid}, pid: {port.pid}')
+                # print(f'Vid: {port.vid}, pid: {port.pid}')
                 if (port.vid in vid_list and port.pid in pid_list):
+                    
                     self.port = port.device
-                    self.ser = Serial(self.port, receiver_by_pid[port.pid]["baud"], timeout=1)
+                    self.baud = receiver_by_pid[port.pid]["baud"]
+                    self.ser = Serial(self.port, self.baud, timeout=1)
                     self.gps_type = receiver_by_pid[port.pid]["name"]
-                    # If we reach here, a port has been successfully opened.
-                    break
+                    print(f'Connected to {self.gps_type} GPS on port {self.port} at {self.baud} baud.')
+                    return
             except Exception as e:
                 print(f"Error opening port {port.device}: {e}")
 
         if self.ser is None:
             raise RuntimeError('No serial port found')
 
-
-    def get_reader(self) -> UBXReader:
-        """
-        Returns a UBXReader instance for the configured serial port.
-
-        Returns:
-            UBXReader: A UBXReader instance for reading UBX messages.
-        """
-        return UBXReader(self.ser)
-
-    def get_nav_pvt_config(self, uart=False):
+    def get_nav_pvt_config(self, uart=False) -> UBXMessage:
         """
         Returns a UBXMessage to configure the receiver to output NAV-PVT
         messages on the USB port.
 
+        Args:
+            uart (bool): If True, configures for UART1 output instead of USB.
         Returns:
             UBXMessage: A UBX-CFG-MSG message to enable NAV-PVT output.
         """

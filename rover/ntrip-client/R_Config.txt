@@ -42,8 +42,8 @@ Flash CFG-UART1OUTPROT-NMEA 1
   RAM CFG-UART1OUTPROT-RTCM3X 0         # Disable RTCM3 output on UART1
 Flash CFG-UART1OUTPROT-RTCM3X 0
 
-  RAM CFG-USBINPROT-NMEA 1              # Enable NMEA Input on USB (it won't expect/decode those messages)
-Flash CFG-USBINPROT-NMEA 1
+  RAM CFG-USBINPROT-NMEA 0              # Disable NMEA Input on USB (it won't expect/decode those messages)
+Flash CFG-USBINPROT-NMEA 0
   RAM CFG-USBINPROT-UBX 1               # Enable UBX input on USB
 Flash CFG-USBINPROT-UBX 1
   RAM CFG-USBINPROT-RTCM3X 1            # Enable RTCM3X input on USB
@@ -68,10 +68,10 @@ Flash CFG-MSGOUT-UBX_RXM_RTCM_UART1 0x1
 Flash CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1
 
 # BS: Enable Output of Raw Data for PPP
-  RAM CFG-MSGOUT-UBX_RXM_RAWX_UART1 0x1             # Enables UBX_RXM_RAWX messages on UART1
-Flash CFG-MSGOUT-UBX_RXM_RAWX_UART1 0x1
-  RAM CFG-MSGOUT-UBX_RXM_RAWX_USB 0x1               # Enables UBX_RXM_RAWX messages on USB
-Flash CFG-MSGOUT-UBX_RXM_RAWX_USB 0x1
+  RAM CFG-MSGOUT-UBX_RXM_RAWX_UART1 0x0             # Enables UBX_RXM_RAWX messages on UART1
+Flash CFG-MSGOUT-UBX_RXM_RAWX_UART1 0x0
+  RAM CFG-MSGOUT-UBX_RXM_RAWX_USB 0x0               # Enables UBX_RXM_RAWX messages on USB
+Flash CFG-MSGOUT-UBX_RXM_RAWX_USB 0x0
 
 # BS: Disable Output of Survey In Status
   RAM CFG-MSGOUT-UBX_NAV_SVIN_USB 0                 # Disable UBX_NAV_SVIN messages on USB

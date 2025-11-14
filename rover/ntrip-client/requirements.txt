@@ -8,3 +8,4 @@ pyserial
 pytz
 pyubx2
 requests
+flask

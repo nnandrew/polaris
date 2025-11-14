@@ -1,2 +1,7 @@
 pygnssutils
 pyubx2
+pygpsclient
+requests
+tqdm
+flask
+dotenv

@@ -66,7 +66,7 @@ class InfluxWriter:
             records (list): A list of Points to add to the batch.
         """
 
-        BATCH_FLUSH_TIME = 1
+        BATCH_FLUSH_TIME = 0.2
 
         if not isinstance(records, list):
             records = [records]
