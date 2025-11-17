@@ -35,7 +35,7 @@ def monitor_hosts():
             records.append(
                 Point("network_telemetry").tag("id", int(host[0])) \
                                           .tag("vpn_ip", str(host[1])) \
-                                          .tag("group_name", str(host[2])) \
+                                          .field("group_name", str(host[2])) \
                                           .field("ping", float(host[3])) \
                                           .time(int(time.time()*1e9))
             )

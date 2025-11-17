@@ -52,6 +52,8 @@ def action(host_id):
         Flask response indicating the result of the action.
     """
 
+    if host_id == 1:
+        return "Cannot modify reserved lighthouse id", 400
     action = flask.request.args.get('action')
     match action:
         case 'enroll':
