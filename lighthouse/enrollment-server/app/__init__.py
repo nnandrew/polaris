@@ -104,7 +104,7 @@ def create_app():
         conn.close()   
         
     # Generate Lighthouse Configuration if necessary
-    if not os.path.exists("./config_1.yml"):
+    if not os.path.exists("./config.yml"):
         config_path = nebula.generate_nebula_config(group_name="lighthouse", public_ip=app.config.get('LIGHTHOUSE_PUBLIC_IP'))
         print(f"Lighthouse Configuration Generated at {config_path}.")   
         

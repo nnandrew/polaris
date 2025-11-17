@@ -30,7 +30,7 @@ def enroll():
         Flask response containing the allocated host_id or an error message.
     """
 
-    group_name = flask.request.form.get('group_name')
+    group_name = flask.request.args.get('group_name')
     if not group_name:
         return "Missing group_name", 400
     if group_name.startswith("rover"):
@@ -52,16 +52,16 @@ def action(host_id):
         Flask response indicating the result of the action.
     """
 
-    action = flask.request.form.get('action')
+    action = flask.request.args.get('action')
     match action:
         case 'enroll':
-            group_name = flask.request.form.get('group_name')
+            group_name = flask.request.args.get('group_name')
             if not group_name:
                 return "Missing group_name", 400
             host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'), host_id)
             return host_id, 200
         case 'rename':
-            group_name = flask.request.form.get('group_name')
+            group_name = flask.request.args.get('group_name')
             if group_name:
                 success = nebula.rename_group(host_id, group_name)
                 if success:
@@ -78,14 +78,13 @@ def action(host_id):
             return "Host removed", 200
         case 'config':
             # Build the target URL
-            config_msg = flask.request.form.get('config_msg')
+            config_msg = flask.request.json.get('config_msg')
             if not config_msg:
                 return "Missing config_msg", 400
             try:
                 response = requests.post(
                     url = f"http://192.168.100.{host_id}/config",
-                    data={"config": f"Flash {config_msg}"}, 
-                    headers={"Content-Type": "application/json"},
+                    json={"config": f"Flash {config_msg}"}, 
                     timeout=3
                 )
                 return response.text, response.status_code

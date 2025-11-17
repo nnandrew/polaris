@@ -102,11 +102,12 @@ def generate_nebula_config(group_name, public_ip, ip_octet=None):
     os.remove(f"./{host_id}.key")
         
     # Lighthouse Configuration
+    config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
     config["static_host_map"]["192.168.100.1"] = [DoubleQuotedScalarString(f"{public_ip}:4242")]
     if group_name == "lighthouse":
         config["lighthouse"]["am_lighthouse"] = True
         config["lighthouse"]["hosts"] = ""
-    config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
+        config_path = "/home/enrollment-server/shared/config.yml" # Nebula container uses standard filename
     
     # File Writing
     with open(config_path, "w") as config_file:
