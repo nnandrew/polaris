@@ -22,15 +22,20 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-    location /api/ {
-        proxy_pass http://enrollment-server:80;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+    location /auth {
+        internal;
+        if ($http_x_api_key = ${LIGHTHOUSE_ADMIN_PASSWORD}) {
+            return 200;
+        }
+        return 401;
     }
 
-    location /nebula/ {
+    location /api/ {
+        satisfy any;
+        auth_request /auth;
+        auth_basic "Restricted";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+            
         proxy_pass http://enrollment-server:80;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -39,6 +44,9 @@ server {
     }
 
     location /grafana/ {
+        auth_basic "Restricted";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+
         proxy_pass http://grafana:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

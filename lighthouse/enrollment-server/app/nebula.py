@@ -54,6 +54,8 @@ def generate_nebula_config(group_name, public_ip, ip_octet=None):
     cursor = conn.cursor()
     if group_name == "lighthouse":
         host_id = 1
+    elif group_name.startswith("basestation"):
+        host_id = 2
     else:
         cursor.execute("SELECT id FROM hosts ORDER BY id")
         used_ids = {row[0] for row in cursor.fetchall()}
@@ -104,16 +106,14 @@ def generate_nebula_config(group_name, public_ip, ip_octet=None):
     if group_name == "lighthouse":
         config["lighthouse"]["am_lighthouse"] = True
         config["lighthouse"]["hosts"] = ""
-        config_path = "/home/enrollment-server/shared/config.yml"
-    else: 
-        config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
+    config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
     
     # File Writing
     with open(config_path, "w") as config_file:
         yaml.dump(config, config_file)       
     current_app.logger.info(f"Certificate on {vpn_ip} generated for {group_name}.")
 
-    return config_path
+    return host_id
 
 def get_base_station():
     """
@@ -198,23 +198,31 @@ def remove_host(host_id):
 
     Args:
         host_id (int): The host's ID.
+    Returns:
+        bool: True if the host was removed, False otherwise.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
     cursor.execute("DELETE FROM hosts WHERE id = ?", (host_id,))
     conn.commit()
+    rows_deleted = cursor.rowcount
     conn.close()
+    return rows_deleted > 0
 
-def rename_group(host_id, new_group_name):
+def rename_group(host_id, group_name):
     """
     Renames the group for a given host.
 
     Args:
         host_id (int): The host's ID.
-        new_group_name (str): The new group name.
+        group_name (str): The new group name.
+    Returns:
+        bool: True if the group was renamed, False otherwise.
     """
     conn = sqlite3.connect('./record.db')
     cursor = conn.cursor()
-    cursor.execute("UPDATE hosts SET group_name = ? WHERE id = ?", (new_group_name, host_id))
+    cursor.execute("UPDATE hosts SET group_name = ? WHERE id = ?", (group_name, host_id))
     conn.commit()
+    rows_updated = cursor.rowcount
     conn.close()
+    return rows_updated > 0

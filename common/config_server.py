@@ -22,27 +22,26 @@ class ConfigServer:
         self.ubx_config = ubx_config
         self.app.add_url_rule("/config", "config", self._config, methods=["POST"])
         # self.token = self._get_receiver_config_token()
-        self.app.before_request(self._check_token)
+        # self.app.before_request(self._check_token)
 
     def run(self):
         self.server_thread = Thread(target=self.app.run, kwargs={"host": "0.0.0.0", "port": 80}, daemon=True)
         self.server_thread.start()
 
-    def _get_receiver_config_token(self) -> str | None:
-        dotenv.load_dotenv()
-        lighthouse_host = os.getenv("LIGHTHOUSE_HOSTNAME")
-        if not lighthouse_host:
-            raise ValueError("LIGHTHOUSE_HOSTNAME environment variable not set")
-        try:
-            response = requests.get(f"https://{lighthouse_host}/api/receiver_config_token")
-            response.raise_for_status()
-            return response.text
-        except requests.exceptions.RequestException as e:
-            print(f"Error getting token: {e}")
-            return None
+    # def _get_receiver_config_token(self) -> str | None:
+    #     dotenv.load_dotenv()
+    #     lighthouse_host = os.getenv("LIGHTHOUSE_HOSTNAME")
+    #     if not lighthouse_host:
+    #         raise ValueError("LIGHTHOUSE_HOSTNAME environment variable not set")
+    #     try:
+    #         response = requests.get(f"https://{lighthouse_host}/api/receiver_config_token")
+    #         response.raise_for_status()
+    #         return response.text
+    #     except requests.exceptions.RequestException as e:
+    #         print(f"Error getting token: {e}")
+    #         return None
 
-    def _check_token(self) -> tuple[dict[str, str], int]:
-        pass
+    # def _check_token(self) -> tuple[dict[str, str], int]:
         # if request.endpoint == "config":
         #     if request.headers.get("Authorization") != f"Bearer {self.token}":
         #         return jsonify({"error": "Unauthorized"}), 401

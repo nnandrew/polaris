@@ -48,23 +48,17 @@ if __name__ == '__main__':
     
     # Load Environment Variables
     dotenv.load_dotenv()
-    LIGHTHOUSE_ADMIN_PASSWORD = os.getenv("LIGHTHOUSE_ADMIN_PASSWORD")
     LIGHTHOUSE_HOSTNAME = os.getenv("LIGHTHOUSE_HOSTNAME")
+    LIGHTHOUSE_ADMIN_PASSWORD = os.getenv("LIGHTHOUSE_ADMIN_PASSWORD")
     LIGHTHOUSE_GROUP_NAME = os.getenv("LIGHTHOUSE_GROUP_NAME")
-    logging.info("Environment Variables Loaded.")
-    
-    # Load Device Variables
     DEVICE_NAME = platform.node()
     DEVICE_OS = platform.platform()
+    API_ROOT = f"https://{LIGHTHOUSE_HOSTNAME}/api"
+    HEADERS = {"X-API-KEY": LIGHTHOUSE_ADMIN_PASSWORD}
+    GROUP_NAME = f"{LIGHTHOUSE_GROUP_NAME}_{DEVICE_NAME}_{DEVICE_OS}"
+    logging.info("Environment Variables Loaded.")
 
     # Attempt to enroll with the Lighthouse until a configuration is received.
-    url = f"https://{LIGHTHOUSE_HOSTNAME}/api/enroll"
-    params = {
-        "LIGHTHOUSE_ADMIN_PASSWORD": LIGHTHOUSE_ADMIN_PASSWORD,
-        "group_name": f"{LIGHTHOUSE_GROUP_NAME}_{DEVICE_NAME}_{DEVICE_OS}",
-    }
-    config_path = "./shared/config.yml"
-    
     while True:
         # Guard clause for network connectivity
         if not ping("8.8.8.8"):
@@ -84,16 +78,31 @@ if __name__ == '__main__':
         # Only attempt enrollment if VPN cannot connect
         if not vpn_connected:
             try:
-                response = requests.get(url, params=params)
-                if response.status_code == 200:
-                    with open(config_path, 'wb') as file:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            file.write(chunk)
-                    logger.info(f"Config saved to {config_path}.")
-                else:
-                    logger.warning(f"Request failed with status code {response.status_code}. Retrying in {BACKOFF_TIME} seconds.")
+                enroll_response = requests.post(
+                    url=f"{API_ROOT}/hosts/enroll", 
+                    params={"group_name": GROUP_NAME}, 
+                    headers=HEADERS
+                )
+                if enroll_response.status_code != 200:
+                    raise Exception(f"Failed to enroll: {enroll_response.status_code}, {enroll_response.text}") 
+                host_id = int(enroll_response.text)
+                
+                download_response = requests.get(
+                    url=f"{API_ROOT}/hosts/{host_id}", 
+                    headers=HEADERS
+                )
+                if download_response.status_code != 200:
+                    raise Exception(f"Failed to download config: {download_response.status_code}, {download_response.text}")
+                config_path = "./shared/config.yml"
+                
+                with open(config_path, 'wb') as file:
+                    for chunk in download_response.iter_content(chunk_size=8192):
+                        file.write(chunk)
+                logger.info(f"Config saved to {config_path}.")
             except requests.RequestException as e:
                 logger.warning(f"Error making GET request: {e}. Retrying in {BACKOFF_TIME} seconds.")
+            except Exception as e:
+                logger.warning(f"{e}. Retrying in {BACKOFF_TIME} seconds.")
         else:
             logger.info(f"VPN connection is healthy! Checking again in {BACKOFF_TIME} seconds.")
         time.sleep(BACKOFF_TIME)

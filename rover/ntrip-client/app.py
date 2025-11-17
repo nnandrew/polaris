@@ -195,7 +195,10 @@ def app():
             if len(sys.argv) > 1:
                 if sys.argv[1] == "personal":
                     dotenv.load_dotenv()
-                    server = requests.get(f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/api/ntrip").text.strip()
+                    server = requests.get(
+                        url=f"https://{os.getenv('LIGHTHOUSE_HOSTNAME')}/api/hosts/basestation",
+                        headers={"X-API-KEY": os.getenv("LIGHTHOUSE_ADMIN_PASSWORD")}
+                    ).text.strip()
                     mountpoint = "pygnssutils"
                     ntripuser = "polaris"
                 elif sys.argv[1] == "public":

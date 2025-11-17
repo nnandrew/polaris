@@ -16,7 +16,7 @@ services:
     # image: polaris/enrollment-client:latest  # FOR FINAL DELIVERABLE
     container_name: enrollment-client
     environment: 
-      - LIGHTHOUSE_GROUP_NAME=base_station
+      - LIGHTHOUSE_GROUP_NAME=basestation
       - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}
       - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
     volumes:

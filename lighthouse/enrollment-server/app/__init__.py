@@ -89,9 +89,8 @@ def create_app():
         subprocess.run(["./nebula-cert", "ca", "-name", "\"Polaris\""])
         print("CA Key and Certificate Generated.")   
         
-    # Generate Lighthouse Configuration if necessary
-    if not os.path.exists("./config.yml"):
-        # Initialize SQLite database
+    # Initialize SQLite database if necessary
+    if not os.path.exists("./record.db"):
         conn = sqlite3.connect("./record.db")
         cursor = conn.cursor()
         cursor.execute('''
@@ -102,7 +101,10 @@ def create_app():
         )
         ''')
         conn.commit()
-        conn.close()
+        conn.close()   
+        
+    # Generate Lighthouse Configuration if necessary
+    if not os.path.exists("./config_1.yml"):
         config_path = nebula.generate_nebula_config(group_name="lighthouse", public_ip=app.config.get('LIGHTHOUSE_PUBLIC_IP'))
         print(f"Lighthouse Configuration Generated at {config_path}.")   
         

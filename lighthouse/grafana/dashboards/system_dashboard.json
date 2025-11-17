@@ -22,7 +22,7 @@
   "links": [],
   "panels": [
     {
-      "collapsed": false,
+      "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -30,276 +30,270 @@
         "y": 0
       },
       "id": 36,
-      "panels": [],
-      "title": "Main View",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "P3C6603E967DC8568"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
+      "panels": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C6603E967DC8568"
           },
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "dark-red",
-                  "index": 0
-                },
-                "1": {
-                  "color": "dark-yellow",
-                  "index": 1
-                },
-                "2": {
-                  "color": "dark-green",
-                  "index": 2
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
                 }
               },
-              "type": "value"
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "dark-red",
+                      "index": 0
+                    },
+                    "1": {
+                      "color": "dark-yellow",
+                      "index": 1
+                    },
+                    "2": {
+                      "color": "dark-green",
+                      "index": 2
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 19,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "id": 33,
+          "interval": "100ms",
+          "options": {
+            "basemap": {
+              "config": {
+                "server": "custom",
+                "showLabels": true,
+                "theme": "auto"
+              },
+              "layer-tooltip": false,
+              "name": "Layer 0",
+              "opacity": 1,
+              "tooltip": false,
+              "type": "osm-standard"
+            },
+            "controls": {
+              "mouseWheelZoom": true,
+              "showAttribution": false,
+              "showDebug": false,
+              "showMeasure": true,
+              "showScale": true,
+              "showZoom": true
+            },
+            "layers": [
+              {
+                "config": {
+                  "arrow": 0,
+                  "style": {
+                    "color": {
+                      "field": "carrier_phase_range_int",
+                      "fixed": "dark-green"
+                    },
+                    "lineWidth": 2,
+                    "opacity": 1,
+                    "rotation": {
+                      "fixed": 0,
+                      "max": 360,
+                      "min": -360,
+                      "mode": "mod"
+                    },
+                    "size": {
+                      "fixed": 5,
+                      "max": 15,
+                      "min": 2
+                    },
+                    "symbol": {
+                      "fixed": "img/icons/marker/circle.svg",
+                      "mode": "fixed"
+                    },
+                    "symbolAlign": {
+                      "horizontal": "center",
+                      "vertical": "center"
+                    },
+                    "textConfig": {
+                      "fontSize": 12,
+                      "offsetX": 0,
+                      "offsetY": 0,
+                      "textAlign": "center",
+                      "textBaseline": "middle"
+                    }
+                  }
+                },
+                "filterData": {
+                  "id": "byRefId",
+                  "options": "Historical"
+                },
+                "layer-tooltip": false,
+                "name": "Historical",
+                "opacity": 0.9,
+                "tooltip": false,
+                "type": "route"
+              },
+              {
+                "config": {
+                  "showLegend": false,
+                  "style": {
+                    "color": {
+                      "fixed": "dark-blue"
+                    },
+                    "opacity": 1,
+                    "rotation": {
+                      "field": "ground_heading_deg",
+                      "fixed": 0,
+                      "max": 360,
+                      "min": -360,
+                      "mode": "mod"
+                    },
+                    "size": {
+                      "fixed": 15,
+                      "max": 15,
+                      "min": 2
+                    },
+                    "symbol": {
+                      "fixed": "img/icons/unicons/location-arrow-alt.svg",
+                      "mode": "fixed"
+                    },
+                    "symbolAlign": {
+                      "horizontal": "center",
+                      "vertical": "center"
+                    },
+                    "text": {
+                      "field": "",
+                      "fixed": "asdf",
+                      "mode": "field"
+                    },
+                    "textConfig": {
+                      "fontSize": 12,
+                      "offsetX": 0,
+                      "offsetY": 0,
+                      "textAlign": "center",
+                      "textBaseline": "middle"
+                    }
+                  }
+                },
+                "filterData": {
+                  "id": "byRefId",
+                  "options": "Live"
+                },
+                "layer-tooltip": false,
+                "location": {
+                  "latitude": "latitude_last",
+                  "longitude": "longitude_last",
+                  "mode": "coords"
+                },
+                "name": "Current Location",
+                "tooltip": true,
+                "type": "markers"
+              }
+            ],
+            "tooltip": {
+              "mode": "details"
+            },
+            "view": {
+              "allLayers": true,
+              "id": "fit",
+              "lastOnly": false,
+              "lat": 30.288309,
+              "layer": "Layer 1",
+              "lon": -97.736095,
+              "zoom": 28
+            }
+          },
+          "pluginVersion": "12.1.1",
+          "targets": [
+            {
+              "dataset": "iox",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "deiu3gixpm51cf"
+              },
+              "editorMode": "code",
+              "format": "table",
+              "hide": false,
+              "rawQuery": true,
+              "rawSql": "SELECT\r\n  time,\r\n  latitude AS latitude_last,\r\n  longitude AS longitude_last,\r\n  ground_heading_deg * 100000 AS ground_heading_deg\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time DESC\r\nLIMIT 1\r\n",
+              "refId": "Live",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ]
+              }
+            },
+            {
+              "dataset": "iox",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "deiu3gixpm51cf"
+              },
+              "editorMode": "code",
+              "format": "table",
+              "hide": false,
+              "rawQuery": true,
+              "rawSql": "SELECT\r\n  time,\r\n  latitude,\r\n  longitude,\r\n  carrier_phase_range_int\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time\r\n",
+              "refId": "Historical",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ]
+              }
             }
           ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 19,
-        "w": 24,
-        "x": 0,
-        "y": 1
-      },
-      "id": 33,
-      "interval": "100ms",
-      "options": {
-        "basemap": {
-          "config": {
-            "server": "custom",
-            "showLabels": true,
-            "theme": "auto"
-          },
-          "layer-tooltip": false,
-          "name": "Layer 0",
-          "opacity": 1,
-          "tooltip": false,
-          "type": "osm-standard"
-        },
-        "controls": {
-          "mouseWheelZoom": true,
-          "showAttribution": false,
-          "showDebug": false,
-          "showMeasure": true,
-          "showScale": true,
-          "showZoom": true
-        },
-        "layers": [
-          {
-            "config": {
-              "showLegend": false,
-              "style": {
-                "color": {
-                  "field": "carrier_phase_range_int",
-                  "fixed": "dark-green"
-                },
-                "opacity": 0.4,
-                "rotation": {
-                  "fixed": 0,
-                  "max": 360,
-                  "min": -360,
-                  "mode": "mod"
-                },
-                "size": {
-                  "fixed": 5,
-                  "max": 15,
-                  "min": 2
-                },
-                "symbol": {
-                  "fixed": "img/icons/marker/circle.svg",
-                  "mode": "fixed"
-                },
-                "symbolAlign": {
-                  "horizontal": "center",
-                  "vertical": "center"
-                },
-                "text": {
-                  "field": "",
-                  "fixed": "",
-                  "mode": "field"
-                },
-                "textConfig": {
-                  "fontSize": 12,
-                  "offsetX": 0,
-                  "offsetY": 0,
-                  "textAlign": "center",
-                  "textBaseline": "middle"
-                }
-              }
-            },
-            "filterData": {
-              "id": "byRefId",
-              "options": "Historical"
-            },
-            "layer-tooltip": false,
-            "location": {
-              "mode": "auto"
-            },
-            "name": "Historical",
-            "opacity": 0.9,
-            "tooltip": false,
-            "type": "markers"
-          },
-          {
-            "config": {
-              "showLegend": false,
-              "style": {
-                "color": {
-                  "fixed": "dark-blue"
-                },
-                "opacity": 1,
-                "rotation": {
-                  "field": "ground_heading_deg",
-                  "fixed": 0,
-                  "max": 360,
-                  "min": -360,
-                  "mode": "mod"
-                },
-                "size": {
-                  "fixed": 15,
-                  "max": 15,
-                  "min": 2
-                },
-                "symbol": {
-                  "fixed": "img/icons/unicons/location-arrow-alt.svg",
-                  "mode": "fixed"
-                },
-                "symbolAlign": {
-                  "horizontal": "center",
-                  "vertical": "center"
-                },
-                "text": {
-                  "field": "",
-                  "fixed": "asdf",
-                  "mode": "field"
-                },
-                "textConfig": {
-                  "fontSize": 12,
-                  "offsetX": 0,
-                  "offsetY": 0,
-                  "textAlign": "center",
-                  "textBaseline": "middle"
-                }
-              }
-            },
-            "filterData": {
-              "id": "byRefId",
-              "options": "Live"
-            },
-            "layer-tooltip": false,
-            "location": {
-              "latitude": "latitude_last",
-              "longitude": "longitude_last",
-              "mode": "coords"
-            },
-            "name": "Current Location",
-            "tooltip": true,
-            "type": "markers"
-          }
-        ],
-        "tooltip": {
-          "mode": "details"
-        },
-        "view": {
-          "allLayers": true,
-          "id": "fit",
-          "lastOnly": false,
-          "lat": 30.288309,
-          "layer": "Layer 1",
-          "lon": -97.736095,
-          "zoom": 28
-        }
-      },
-      "pluginVersion": "12.1.1",
-      "targets": [
-        {
-          "dataset": "iox",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "deiu3gixpm51cf"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "hide": false,
-          "rawQuery": true,
-          "rawSql": "SELECT\r\n  time,\r\n  latitude AS latitude_last,\r\n  longitude AS longitude_last,\r\n  ground_heading_deg * 100000 AS ground_heading_deg\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time DESC\r\nLIMIT 1\r\n",
-          "refId": "Live",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ]
-          }
-        },
-        {
-          "dataset": "iox",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "deiu3gixpm51cf"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "hide": false,
-          "rawQuery": true,
-          "rawSql": "SELECT\r\n  time,\r\n  latitude,\r\n  longitude,\r\n  carrier_phase_range_int\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time\r\n",
-          "refId": "Historical",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ]
-          }
+          "title": "Live View",
+          "type": "geomap"
         }
       ],
-      "title": "Live View",
-      "type": "geomap"
+      "title": "Main View",
+      "type": "row"
     },
     {
       "collapsed": true,
@@ -307,7 +301,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 1
       },
       "id": 3,
       "panels": [
@@ -398,7 +392,7 @@
             "h": 8,
             "w": 15,
             "x": 0,
-            "y": 21
+            "y": 2
           },
           "id": 32,
           "interval": "1s",
@@ -587,7 +581,7 @@
             "h": 20,
             "w": 9,
             "x": 15,
-            "y": 21
+            "y": 2
           },
           "id": 39,
           "interval": "100ms",
@@ -897,7 +891,7 @@
             "h": 4,
             "w": 15,
             "x": 0,
-            "y": 29
+            "y": 10
           },
           "id": 6,
           "interval": "1s",
@@ -1076,7 +1070,7 @@
             "h": 4,
             "w": 15,
             "x": 0,
-            "y": 33
+            "y": 14
           },
           "id": 7,
           "interval": "1s",
@@ -1206,7 +1200,7 @@
             "h": 4,
             "w": 3,
             "x": 0,
-            "y": 37
+            "y": 18
           },
           "id": 13,
           "interval": "1s",
@@ -1327,7 +1321,7 @@
             "h": 4,
             "w": 3,
             "x": 3,
-            "y": 37
+            "y": 18
           },
           "id": 27,
           "interval": "1s",
@@ -1429,7 +1423,7 @@
             "h": 4,
             "w": 3,
             "x": 6,
-            "y": 37
+            "y": 18
           },
           "id": 28,
           "interval": "1s",
@@ -1535,7 +1529,7 @@
             "h": 4,
             "w": 3,
             "x": 9,
-            "y": 37
+            "y": 18
           },
           "id": 26,
           "interval": "1s",
@@ -1691,7 +1685,7 @@
             "h": 4,
             "w": 3,
             "x": 12,
-            "y": 37
+            "y": 18
           },
           "id": 29,
           "interval": "1s",
@@ -1751,12 +1745,12 @@
       "type": "row"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 2
       },
       "id": 38,
       "panels": [],
@@ -1764,16 +1758,489 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P3C6603E967DC8568"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "noValue": "0%",
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 25
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 0,
+        "y": 3
+      },
+      "id": 41,
+      "interval": "1s",
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.1.1",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P07ECAE0F45840A9F"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  num_sats_tracked,\n  num_sats_visible\nFROM\n  station_telemetry\nWHERE\n  $__timeFilter(time) \nORDER BY\n  time\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Line of Sight (% of expected satellites visible)",
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "num_sats_visible"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "num_sats_tracked"
+                }
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": true
+          }
+        }
+      ],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P3C6603E967DC8568"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "green",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "Satellites"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 7,
+        "y": 3
+      },
+      "id": 44,
+      "interval": "1s",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^num_sats_code_locked$/",
+          "values": false
+        },
+        "showPercentChange": true,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.1",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P07ECAE0F45840A9F"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  num_sats_code_locked\nFROM\n  station_telemetry\nWHERE\n  $__timeFilter(time) \nORDER BY\n  time\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "GNSS-Locked",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P3C6603E967DC8568"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 17,
+        "y": 3
+      },
+      "id": 40,
+      "interval": "100ms",
+      "options": {
+        "basemap": {
+          "config": {
+            "server": "custom",
+            "showLabels": true,
+            "theme": "auto"
+          },
+          "layer-tooltip": false,
+          "name": "Layer 0",
+          "opacity": 1,
+          "tooltip": false,
+          "type": "osm-standard"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": false,
+          "showDebug": false,
+          "showMeasure": true,
+          "showScale": true,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "purple"
+                },
+                "opacity": 1,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 15,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/unicons/wifi.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "text": {
+                  "field": "",
+                  "fixed": "asdf",
+                  "mode": "field"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "Live"
+            },
+            "layer-tooltip": false,
+            "location": {
+              "latitude": "latitude_last",
+              "longitude": "longitude_last",
+              "mode": "coords"
+            },
+            "name": "Current Location",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "id": "fit",
+          "lastOnly": false,
+          "lat": 30.288309,
+          "layer": "Layer 1",
+          "lon": -97.736095,
+          "zoom": 18
+        }
+      },
+      "pluginVersion": "12.1.1",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "deiu3gixpm51cf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  time,\r\n  latitude AS latitude_last,\r\n  longitude AS longitude_last\r\nFROM\r\n  station_telemetry\r\nWHERE\r\n  $__timeFilter(time) AND latitude IS NOT NULL\r\nORDER BY\r\n  time DESC\r\nLIMIT 1\r\n",
+          "refId": "Live",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P3C6603E967DC8568"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "green",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "Satellites"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 7,
+        "y": 7
+      },
+      "id": 43,
+      "interval": "1s",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^num_sats_code_locked$/",
+          "values": false
+        },
+        "showPercentChange": true,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.1",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P07ECAE0F45840A9F"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  num_sats_code_locked\nFROM\n  station_telemetry\nWHERE\n  $__timeFilter(time) \nORDER BY\n  time\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "RTK-Locked",
+      "type": "stat"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 11
       },
       "id": 23,
       "panels": [],
-      "title": "Network Telemetry",
+      "title": "Network Management",
       "type": "row"
     },
     {
@@ -1968,14 +2435,65 @@
                 "value": 140
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Actions"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "actions"
+                }
+              },
+              {
+                "id": "actions",
+                "value": [
+                  {
+                    "confirmation": "Are you sure you want to toggle NAV-PVT on ${__data.fields[\"VPN IP\"]}?",
+                    "fetch": {
+                      "body": "{\"config\": \"Flash CFG-MSGOUT-UBX_NAV_PVT_UART1 0x0\"}",
+                      "headers": [
+                        [
+                          "Content-Type",
+                          "application/json"
+                        ]
+                      ],
+                      "method": "POST",
+                      "queryParams": [],
+                      "url": "http://${__data.fields[\"VPN IP\"]}/config"
+                    },
+                    "style": {
+                      "backgroundColor": "#5794F2"
+                    },
+                    "title": "Toggle NAV-PVT",
+                    "type": "fetch"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Node Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 128
+              }
+            ]
           }
         ]
       },
       "gridPos": {
         "h": 8,
-        "w": 10,
+        "w": 24,
         "x": 0,
-        "y": 23
+        "y": 12
       },
       "id": 30,
       "interval": "1s",
@@ -1992,12 +2510,7 @@
         },
         "frameIndex": 0,
         "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "ping"
-          }
-        ]
+        "sortBy": []
       },
       "pluginVersion": "12.1.1",
       "targets": [
@@ -2006,7 +2519,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  id::BIGINT,\n  vpn_ip,\n  group_name,\n  ping,\n  ping AS ping_avg,\n  ping AS ping_trend\nFROM network_telemetry\nWHERE $__timeFilter(time)\nORDER BY time ASC",
+          "rawSql": "SELECT\n  time,\n  id::BIGINT,\n  vpn_ip,\n  group_name,\n  group_name as Actions,\n  ping,\n  ping AS ping_avg,\n  ping AS ping_trend\nFROM network_telemetry\nWHERE $__timeFilter(time)\nORDER BY time ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2073,6 +2586,10 @@
                 ],
                 "operation": "aggregate"
               },
+              "actions": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
               "group_name": {
                 "aggregations": [],
                 "operation": "groupby"
@@ -2129,15 +2646,17 @@
             },
             "includeByName": {},
             "indexByName": {
+              "actions": 2,
               "group_name": 1,
-              "ping (lastNotNull)": 2,
-              "ping_avg (mean)": 3,
-              "ping_trend (allValues)": 4,
+              "ping (lastNotNull)": 3,
+              "ping_avg (mean)": 4,
+              "ping_trend (allValues)": 5,
               "vpn_ip": 0
             },
             "renameByName": {
               "Average (lastNotNull)": "Average",
               "Mean (lastNotNull)": "Average",
+              "actions": "Actions",
               "group_name": "Node Name",
               "ping (lastNotNull)": "Ping",
               "ping2 (allValues)": "Trend",
@@ -2161,7 +2680,7 @@
     "list": []
   },
   "time": {
-    "from": "now-10s",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -2181,5 +2700,5 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "deiu8hvipbo5cb",
-  "version": 10
+  "version": 3
 }
