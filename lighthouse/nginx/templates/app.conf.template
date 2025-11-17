@@ -43,6 +43,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    location = /grafana/ {
+        return 302 /grafana/d/deiu8hvipbo5cb/dashboard?orgId=1&from=now-5m&to=now&timezone=browser&refresh=1s&kiosk=true;
+    }
+
     location /grafana/ {
         auth_basic "Restricted";
         auth_basic_user_file /etc/nginx/.htpasswd;
