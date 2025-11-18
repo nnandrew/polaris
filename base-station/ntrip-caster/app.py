@@ -48,6 +48,8 @@ def read_messages_thread(ubx_config, rtcm_fd, stop_event):
                 os.write(rtcm_fd, raw_data)
             if protocol(raw_data) == UBX_PROTOCOL:
                 # print(parsed_data.identity)
+                with open("station.ubx", "ab") as f:
+                    f.write(raw_data)
                 match parsed_data.identity:
                     case 'ACK-ACK':
                         ubx_config.set_ack()
@@ -55,8 +57,6 @@ def read_messages_thread(ubx_config, rtcm_fd, stop_event):
                         ubx_config.set_nack()
                     case 'RXM-RAWX':
                         # Log to file
-                        with open("rxm.ubx", "ab") as f:
-                            f.write(raw_data)
                         pass
                     case 'RXM-SFRBX':
                         # Log to file
@@ -105,7 +105,7 @@ def main():
     fds = []
     rtcm_fd, rtcm_slave_fd = pty.openpty()
     rtcm_port = os.ttyname(rtcm_slave_fd)
-    print(rtcm_port)
+    print(f"Forwarding RTCM to: {rtcm_port}")
     fds.append(rtcm_fd)
     fds.append(rtcm_slave_fd)
     
@@ -145,7 +145,7 @@ def main():
     process = subprocess.Popen(cmd)
     
     # Start PPP manager if needed (commented out here)
-    # ppp = PPPProcessor(gps.ser)
+    # ppp = PPPProcessor()
     
     # Wait for the process to complete
     print("Base station running - press CTRL-C to terminate...")

@@ -23,8 +23,8 @@ Flash CFG-RATE-TIMEREF 1
 Flash CFG-UART1-BAUDRATE 0x70800
 
 # Base Station Fixed Configuration
-  RAM CFG-TMODE-MODE 2                      # Fixed mode
-Flash CFG-TMODE-MODE 2
+  RAM CFG-TMODE-MODE 0                      # Fixed mode TEMPORARY
+Flash CFG-TMODE-MODE 0
   RAM CFG-TMODE-POS_TYPE 1                  # Lattitude, Longitude, Height Mode
 Flash CFG-TMODE-POS_TYPE 1
   RAM CFG-TMODE-LAT 302879552               # 1e-7

@@ -1,4 +1,10 @@
 .env
+.ubx
+.obs
+.nav
+.CLK
+.SP3
+.pos
 .DS_Store
 .idea/
 .venv/
