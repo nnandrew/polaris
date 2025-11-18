@@ -48,7 +48,7 @@ def read_messages_thread(ubx_config, rtcm_fd, stop_event):
                 os.write(rtcm_fd, raw_data)
             if protocol(raw_data) == UBX_PROTOCOL:
                 # print(parsed_data.identity)
-                with open("station.ubx", "ab") as f:
+                with open("./shared/station.ubx", "ab") as f:
                     f.write(raw_data)
                 match parsed_data.identity:
                     case 'ACK-ACK':

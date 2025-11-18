@@ -4,7 +4,7 @@ services:
     # image: polaris/ntrip-caster:latest  # FOR FINAL DELIVERABLE
     container_name: ntrip-caster
     volumes:
-      - ./shared:/home/ntrip-caster
+      - ./shared:/home/ntrip-caster/shared
       - ../common:/common
     environment:
       - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}  
