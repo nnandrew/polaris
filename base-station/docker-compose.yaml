@@ -6,6 +6,9 @@ services:
     volumes:
       - ./shared:/home/ntrip-caster
       - ../common:/common
+    environment:
+      - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}  
+      - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
     devices:
       - "${GNSS_DEVICE_FILE}:${GNSS_DEVICE_FILE}"  # GNSS Receiver
     ports:
