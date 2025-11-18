@@ -12,6 +12,7 @@ services:
     devices:
       - "${GNSS_DEVICE_FILE}:${GNSS_DEVICE_FILE}"  # GNSS Receiver
     ports:
+      - "80:80"     # HTTP
       - "2101:2101" # NTRIP
     restart: unless-stopped
   enrollment-client:
@@ -24,9 +25,6 @@ services:
       - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
     volumes:
       - ./shared:/home/enrollment-client/shared
-    ports:
-      - "80:80"   # HTTP
-      - "443:443" # HTTPS
     restart: unless-stopped
   nebula:
     image: nebulaoss/nebula:latest
