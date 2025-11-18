@@ -1,5 +1,6 @@
 FROM python:3.10-slim
-WORKDIR /home/ntrip-client
-COPY . /home/ntrip-client
+COPY requirements.txt /home/ntrip-caster/requirements.txt
+WORKDIR /home/ntrip-caster
 RUN pip install --no-cache-dir -r requirements.txt
-CMD ["python","-u", "app.py"]
+COPY . /home/ntrip-caster
+CMD ["python", "-u", "app.py"]
