@@ -40,6 +40,7 @@ def monitor_hosts():
                                           .time(int(time.time()*1e9))
             )
         InfluxWriter.async_write(records)
+        print(f"Pinged {len(hosts)} hosts and wrote telemetry to Influx.")
 
 def create_app():
     """

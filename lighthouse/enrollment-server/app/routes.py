@@ -39,7 +39,7 @@ def enroll():
         host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'))
     else:
         return "Unexpected group_name", 400
-    return host_id, 200
+    return str(host_id), 200
 
 @main_bp.route('/api/hosts/<int:host_id>', methods=['POST'])
 def action(host_id):
@@ -61,7 +61,7 @@ def action(host_id):
             if not group_name:
                 return "Missing group_name", 400
             host_id = nebula.generate_nebula_config(group_name, flask.current_app.config.get('LIGHTHOUSE_HOSTNAME'), host_id)
-            return host_id, 200
+            return str(host_id), 200
         case 'rename':
             group_name = flask.request.args.get('group_name')
             if group_name:
