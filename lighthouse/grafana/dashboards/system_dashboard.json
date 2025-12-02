@@ -2701,7 +2701,7 @@
                           "remove"
                         ]
                       ],
-                      "url": "https://polaris.nandrew.dev/api/hosts"
+                      "url": "https://polaris.nandrew.dev/api/hosts/${__data.fields.Actions}"
                     },
                     "style": {
                       "backgroundColor": "#F2495C"
@@ -2968,5 +2968,5 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "deiu8hvipbo5cb",
-  "version": 3
+  "version": 2
 }
