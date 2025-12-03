@@ -78,3 +78,9 @@ Flash CFG-MSGOUT-UBX_RXM_RAWX_USB 0x0
 Flash CFG-MSGOUT-UBX_NAV_SVIN_USB 0
   RAM CFG-MSGOUT-UBX_NAV_SVIN_UART1 0               # Disable UBX_NAV_SVIN messages on UART1
 Flash CFG-MSGOUT-UBX_NAV_SVIN_UART1 0
+
+# R: Satellites for Telemetry
+  RAM CFG-MSGOUT-UBX_NAV_SAT_USB 0x1                # Enables UBX_NAV_SAT messages on USB
+Flash CFG-MSGOUT-UBX_NAV_SAT_USB 0x1
+  RAM CFG-MSGOUT-UBX_NAV_SAT_UART1 0x1              # Enables UBX_NAV_SAT messages on UART1
+Flash CFG-MSGOUT-UBX_NAV_SAT_UART1 0x1

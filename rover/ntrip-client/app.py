@@ -27,9 +27,11 @@ import pytz
 import dotenv
 import requests
 from pyubx2 import UBXReader
+from pyubx2.ubxhelpers import gnss2str
 from influxdb_client_3 import Point
 from pygnssutils import GNSSNTRIPClient
 from pygnssutils.gnssntripclient import GGAFIXED
+
 
 try:
     from common.ubx_config import UBXConfig
@@ -62,6 +64,10 @@ def read_messages_thread(gps, ubx_config, save_event, stop_event):
     print(f"{'read_messages_thread':<20}: Starting...")
     ubr = UBXReader(gps.ser)
     last_rxm_rtcm_time = 0
+    
+    def get_repeated_field(parsed_data, field_name, index):
+        return getattr(parsed_data, f"{field_name}_{index+1:02d}")
+    
     while not stop_event.is_set():
         _, parsed_data = ubr.read()
         if parsed_data:
@@ -115,6 +121,29 @@ def read_messages_thread(gps, ubx_config, save_event, stop_event):
                         InfluxWriter.batch_write(point)
                     except Exception as e:
                         print(f"{'read_messages_thread':<20}: Ignoring error: {e}")
+                case 'NAV-SAT':
+                        # Use for debugging purposes            
+                        num_sats = 0
+                        num_sats_visible = 0
+                        num_sats_code_locked = 0
+                        num_sats_carrier_locked = 0
+                        for i in range(parsed_data.numSvs):
+                            constellation = gnss2str(get_repeated_field(parsed_data, "gnssId", i))
+                            qualityInd = get_repeated_field(parsed_data, "qualityInd", i)
+                            if constellation != "SBAS":
+                                if qualityInd >= 5:
+                                    num_sats_carrier_locked += 1
+                                if qualityInd >= 4:
+                                    num_sats_code_locked += 1
+                                if qualityInd >= 2:
+                                    num_sats_visible += 1
+                            num_sats += 1
+                        point = Point("station_telemetry") \
+                            .field("num_sats_tracked", int(num_sats)) \
+                            .field("num_sats_visible", int(num_sats_visible)) \
+                            .field("num_sats_code_locked", int(num_sats_code_locked)) \
+                            .field("num_sats_carrier_locked", int(num_sats_carrier_locked))
+                        InfluxWriter.batch_write(point)
                 case 'RXM-RTCM':
                     # print(f"{'read_messages_thread:':<20}: DEBUG: {parsed_data}")
                     RXM_RTCM_LOG_INTERVAL = 10  # seconds
