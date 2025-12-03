@@ -6,6 +6,8 @@ services:
     environment: 
       - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}
       - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
+    volumes:
+      - ../common:/common
     devices:
       - "${GNSS_DEVICE_FILE}:${GNSS_DEVICE_FILE}"  # GNSS Receiver
     ports:
@@ -21,9 +23,6 @@ services:
       - LIGHTHOUSE_ADMIN_PASSWORD=${LIGHTHOUSE_ADMIN_PASSWORD}
     volumes:
       - ./shared:/home/enrollment-client/shared
-    ports:
-      - "80:80"   # HTTP
-      - "443:443" # HTTPS
     restart: unless-stopped
   nebula:
     image: nebulaoss/nebula:latest
