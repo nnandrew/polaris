@@ -11,8 +11,9 @@ The script performs the following steps:
 4. Constructs and executes a `gnssserver` command to start the NTRIP caster.
 """
 
+from queue import Queue
 from threading import Event, Thread
-# from ppp_processor import PPPProcessor
+from ppp_processor import PPPProcessor
 import subprocess
 import pty
 import sys
@@ -33,7 +34,7 @@ except ImportError:
     from influx_client import InfluxWriter
     from config_server import ConfigServer
 
-def read_messages_thread(ubx_config, rtcm_fd, stop_event):
+def read_messages_thread(ubx_config, rtcm_fd, latest_pos, ppp_done, stop_event):
     
     print(f"{'read_messages_thread':<20}: Starting...")
     
@@ -48,24 +49,32 @@ def read_messages_thread(ubx_config, rtcm_fd, stop_event):
                 os.write(rtcm_fd, raw_data)
             if protocol(raw_data) == UBX_PROTOCOL:
                 # print(parsed_data.identity)
-                with open("./shared/station.ubx", "ab") as f:
-                    f.write(raw_data)
+                if not ppp_done.is_set():
+                    with open("./shared/station.ubx", "ab") as f:
+                        f.write(raw_data)
+                else:
+                    os.remove("./shared/station.ubx")
                 match parsed_data.identity:
                     case 'ACK-ACK':
                         ubx_config.set_ack()
                     case 'ACK-NAK':
                         ubx_config.set_nack()
                     case 'RXM-RAWX':
-                        # Log to file
+                        # Already logged to file
                         pass
                     case 'RXM-SFRBX':
-                        # Log to file
+                        # Already logged to file
                         pass
                     case 'NAV-PVT':
                         # Use for debugging purposes
                         point = Point("station_telemetry").field("latitude", parsed_data.lat) \
-                                                          .field("longitude", parsed_data.lon)
+                                                          .field("longitude", parsed_data.lon) \
+                                                          .field("height", parsed_data.height)
                         InfluxWriter.batch_write(point)
+                        # Pass latest position to PPP processor
+                        if latest_pos.full():
+                            latest_pos.get_nowait()
+                        latest_pos.put((parsed_data.lat, parsed_data.lon, parsed_data.height))
                     case 'NAV-SAT':
                         # Use for debugging purposes            
                         num_sats = 0
@@ -111,8 +120,14 @@ def main():
     
     # Initialize UBX Config
     ubx_config = UBXConfig(gps.ser)
+    latest_pos = Queue(maxsize=1)
+    ppp_done = Event()
     stop_event = Event()
-    read_thread = Thread(target=read_messages_thread, args=(ubx_config, rtcm_fd, stop_event), daemon=True)
+    read_thread = Thread(
+        target=read_messages_thread, 
+        args=(ubx_config, rtcm_fd, latest_pos, ppp_done, stop_event), 
+        daemon=True
+    )
     read_thread.start()
     
     # Send base station configuration
@@ -126,8 +141,11 @@ def main():
     # Start the config server thread
     ConfigServer(ubx_config).run()
     
-    # Define the command and arguments to start the NTRIP caster
-    cmd = [
+    # Start PPP manager
+    PPPProcessor(ubx_config, latest_pos, ppp_done, stop_event).run()
+    
+    # Start the gnssserver NTRIP caster process
+    process = subprocess.Popen([
         "gnssserver",
         "--inport", rtcm_port,
         "--timeout", "10",
@@ -139,13 +157,7 @@ def main():
         "--ntripuser", "polaris",
         "--ntrippassword", "none",
         "--verbosity", "2",      # Verbose output
-    ]
-
-    # Start the gnssserver process
-    process = subprocess.Popen(cmd)
-    
-    # Start PPP manager if needed (commented out here)
-    # ppp = PPPProcessor()
+    ])
     
     # Wait for the process to complete
     print("Base station running - press CTRL-C to terminate...")

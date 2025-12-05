@@ -75,11 +75,60 @@ class UBXConfig:
 
         # print("Waiting for ACK...")
         return self._wait_for_reply(self.ACK_TIMEOUT)
+    
+    def send_fixed(self, lat_deg: float, lon_deg: float, height_m: float) -> tuple[bool, str]:
+        """
+        Sends a fixed position configuration to the u-blox receiver.
+
+        Args:
+            lat_deg (float): Latitude in degrees.
+            lon_deg (float): Longitude in degrees.
+            height_m (float): Height in meters.
+
+        Returns:
+            bool: True if the configuration was acknowledged, False otherwise.
+            str: A message indicating the result of the operation.
+        """
+        cfg_data = [
+            ('CFG_TMODE_MODE', 2),                      # Fixed mode
+            ('CFG_TMODE_POS_TYPE', 1),                  # Latitude, Longitude, Height Mode
+            ('CFG_TMODE_LAT', int(lat_deg * 1e7)),      # Latitude in 1e-7 degrees
+            ('CFG_TMODE_LON', int(lon_deg * 1e7)),      # Longitude in 1e-7 degrees
+            ('CFG_TMODE_HEIGHT', int(height_m * 100)),  # Height in cm
+        ]
+        msg = UBXMessage.config_set(
+            layers=(SET_LAYER_RAM | SET_LAYER_FLASH | SET_LAYER_BBR),
+            transaction=TXN_NONE,
+            cfgData=cfg_data,
+        )
+        return self.send_config(msg)
+    
+    def send_survey(self) -> tuple[bool, str]:
+        """
+        Sends a survey-in configuration to the u-blox receiver.
+
+        Returns:
+            bool: True if the configuration was acknowledged, False otherwise.
+            str: A message indicating the result of the operation.
+        """
+        cfg_data = [
+            ('CFG_TMODE_MODE', 1),                 # Survey-in mode
+            ('CFG_TMODE_SVIN_MIN_DUR', 60),        # Minimum duration in seconds
+            ('CFG_TMODE_SVIN_ACC_LIMIT', 5000),    # Accuracy limit in mm
+            ('CFG_MSGOUT_UBX_NAV_SVIN_USB', 1),    # Enable UBX_NAV_SVIN on USB
+            ('CFG_MSGOUT_UBX_NAV_SVIN_UART1', 1),  # Enable UBX_NAV_SVIN on UART1
+        ]
+        msg = UBXMessage.config_set(
+            layers=(SET_LAYER_RAM | SET_LAYER_FLASH | SET_LAYER_BBR),
+            transaction=TXN_NONE,
+            cfgData=cfg_data,
+        )
+        return self.send_config(msg)
 
     @staticmethod
-    def _signed_16(value) -> int:
+    def _signed_64(value) -> int:
         """
-        Converts a 16-bit hexadecimal string to a signed integer.
+        Converts a 64-bit hexadecimal string to a signed integer.
 
         Args:
             value (str): The hexadecimal string to convert.
@@ -119,7 +168,7 @@ class UBXConfig:
                     if attribute_type is bytes:
                         temp_msg = (ubx_id, int(split_line[2], 0).to_bytes(length=1, byteorder='big')) # Must convert to bytes if ID requires it
                     elif ubx_id == 'CFG_TMODE_LON':
-                        temp_msg = (ubx_id, UBXConfig._signed_16(split_line[2])) # Negative numbers in hex work weird
+                        temp_msg = (ubx_id, UBXConfig._signed_64(split_line[2])) # Negative numbers in hex work weird
                     else:
                         temp_msg = (ubx_id, int(split_line[2], 0))
                     cfg_data.append(temp_msg)

@@ -7,3 +7,4 @@ flask
 dotenv
 influxdb3-python
 matplotlib
+geopy
