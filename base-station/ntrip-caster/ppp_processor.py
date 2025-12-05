@@ -20,10 +20,9 @@ class PPPProcessor(threading.Thread):
         self.ppp_done = ppp_done
         self.stop_event = stop_event
         self.rtklib_path = "./RTKLIB/bin"
-        # self.rtklib_path = "" 
         self.start_time = datetime.now()
         self.intervals = [
-            15*60, 30*60, 60*60, 2*3600, 4*3600, 6*3600,
+            5, 15*60, 30*60, 60*60, 2*3600, 4*3600, 6*3600,
             12*3600, 24*3600, 48*3600, 96*3600, 192*3600, 384*3600
         ]
         super().__init__()
