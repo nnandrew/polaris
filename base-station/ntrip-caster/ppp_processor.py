@@ -75,7 +75,7 @@ class PPPProcessor(threading.Thread):
                  
                 # Take snapshot of UBX data and run PPP   
                 print("PPP Processor: Taking UBX snapshot and running PPP...")
-                os.mkdir("./temp")
+                os.mkdirs("./temp", exist_ok=True)
                 shutil.copyfile("./shared/station.ubx", ubx_file)
                 self.convert_ubx_to_rinex(ubx_file, obs_file, nav_file)
                 obs_datetime = self.parse_observation_start_time(obs_file)

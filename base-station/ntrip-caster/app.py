@@ -40,7 +40,10 @@ def read_messages_thread(ubx_config, rtcm_fd, latest_pos, ppp_done, stop_event):
     
     def get_repeated_field(parsed_data, field_name, index):
         return getattr(parsed_data, f"{field_name}_{index+1:02d}")
-    
+
+    if os.path.exists("./shared/station.ubx"):
+        os.remove("./shared/station.ubx")
+
     ubr = UBXReader(ubx_config.ser)
     while not stop_event.is_set():
         raw_data, parsed_data = ubr.read()
