@@ -138,7 +138,7 @@ def read_messages_thread(gps, ubx_config, save_event, stop_event):
                                 if qualityInd >= 2:
                                     num_sats_visible += 1
                             num_sats += 1
-                        point = Point("station_telemetry") \
+                        point = Point("metrics").tag("device", gps.gps_type) \
                             .field("num_sats_tracked", int(num_sats)) \
                             .field("num_sats_visible", int(num_sats_visible)) \
                             .field("num_sats_code_locked", int(num_sats_code_locked)) \
