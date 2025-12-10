@@ -1,7 +1,7 @@
 services:
   ntrip-client:
-    build: ./ntrip-client
-    # image: polaris/ntrip-client:latest # FOR FINAL DELIVERABLE
+    build: ./ntrip-client # Local Development Only
+    # image: ghcr.io/drew/polaris/ntrip-client:latest # For Final Deliverable
     container_name: ntrip-client
     environment: 
       - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}
@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
   enrollment-client:
     build: ../common/enrollment-client
-    # image: polaris/enrollment-client:latest # FOR FINAL DELIVERABLE
+    # image: ghcr.io/drew/polaris/enrollment-client:latest # For Final Deliverable
     container_name: enrollment-client
     environment: 
       - LIGHTHOUSE_GROUP_NAME=rover
