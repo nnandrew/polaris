@@ -19,7 +19,9 @@ Flash CFG-NMEA-HIGHPREC 1
 Flash CFG-NMEA-PROTVER 41
   RAM CFG-RATE-TIMEREF 1                    # Time system to which measurements are aligned (GPS by default)
 Flash CFG-RATE-TIMEREF 1
-  RAM CFG-UART1-BAUDRATE 0x70800            # UART Baudrate (suggested from following config)
+  RAM CFG-RATE-MEAS 100                     # 10 Hz Output Rate
+Flash CFG-RATE-MEAS 100
+  RAM CFG-UART1-BAUDRATE 0x70800            # 460800 UART Baudrate (suggested from following config)
 Flash CFG-UART1-BAUDRATE 0x70800
   RAM CFG-NAVHPG-DGNSSMODE 5                # RTK Car Mode
 Flash CFG-NAVHPG-DGNSSMODE 5
@@ -67,7 +69,7 @@ Flash CFG-MSGOUT-UBX_RXM_RTCM_UART1 0x1
   RAM CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1               # Enables UBX_RXM_RTCM messages on USB
 Flash CFG-MSGOUT-UBX_RXM_RTCM_USB 0x1
 
-# BS: Enable Output of Raw Data for PPP
+# BS: Disable Output of Raw Data for PPP
   RAM CFG-MSGOUT-UBX_RXM_RAWX_UART1 0x0             # Enables UBX_RXM_RAWX messages on UART1
 Flash CFG-MSGOUT-UBX_RXM_RAWX_UART1 0x0
   RAM CFG-MSGOUT-UBX_RXM_RAWX_USB 0x0               # Enables UBX_RXM_RAWX messages on USB

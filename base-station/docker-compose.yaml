@@ -1,7 +1,7 @@
 services:
   ntrip-caster:
-    build: ./ntrip-caster
-    # image: polaris/ntrip-caster:latest  # FOR FINAL DELIVERABLE
+    build: ./ntrip-caster # Local Development Only
+    # image: ghcr.io/drew/polaris/ntrip-caster:latest  # For Final Deliverable
     container_name: ntrip-caster
     volumes:
       - ./shared:/home/ntrip-caster/shared
@@ -16,8 +16,8 @@ services:
       - "2101:2101" # NTRIP
     restart: unless-stopped
   enrollment-client:
-    build: ../common/enrollment-client
-    # image: polaris/enrollment-client:latest  # FOR FINAL DELIVERABLE
+    build: ../common/enrollment-client # For Development Only
+    # image: ghcr.io/drew/polaris/enrollment-client:latest  # For Final Deliverable
     container_name: enrollment-client
     environment: 
       - LIGHTHOUSE_GROUP_NAME=basestation

@@ -1,4 +1,25 @@
+### ---- BUILD STAGE ----
+FROM gcc:12 AS builder
+
+# Install deps
+RUN apt-get update && apt-get install -y git make
+WORKDIR /build
+RUN git clone https://github.com/rtklibexplorer/RTKLIB.git
+
+# Build binaries
+RUN cd /build/RTKLIB/app/consapp/str2str/gcc && make
+RUN cd /build/RTKLIB/app/consapp/convbin/gcc && make
+RUN cd /build/RTKLIB/app/consapp/rnx2rtkp/gcc && make
+
+### ---- RUNTIME STAGE ----
 FROM python:3.10-slim
+
+# Copy binaries
+COPY --from=builder /build/RTKLIB/app/consapp/str2str/gcc/str2str /usr/local/bin/
+COPY --from=builder /build/RTKLIB/app/consapp/convbin/gcc/convbin /usr/local/bin/
+COPY --from=builder /build/RTKLIB/app/consapp/rnx2rtkp/gcc/rnx2rtkp /usr/local/bin/
+
+# Copy app
 COPY requirements.txt /home/ntrip-caster/requirements.txt
 WORKDIR /home/ntrip-caster
 RUN pip install --no-cache-dir -r requirements.txt

@@ -142,10 +142,11 @@ def main():
         print(f"\n\nFailed to configure base station: {msg}\n\n")
     
     # Start the config server thread
-    ConfigServer(ubx_config).run()
+    ppp_stop_event = Event()
+    ConfigServer(ubx_config, is_base_station=True, ppp_stop_event=ppp_stop_event).run()
     
     # Start PPP manager
-    PPPProcessor(ubx_config, latest_pos, ppp_done, stop_event).run()
+    PPPProcessor(ubx_config, latest_pos, ppp_done, ppp_stop_event).run()
     
     # Start the gnssserver NTRIP caster process
     process = subprocess.Popen([
@@ -170,6 +171,7 @@ def main():
         print("\nStopping gnssserver...")
         process.terminate()
         stop_event.set()
+        ppp_stop_event.set()
         read_thread.join()
     finally:
         for fd in fds:

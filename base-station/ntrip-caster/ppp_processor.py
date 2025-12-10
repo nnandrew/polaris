@@ -68,10 +68,10 @@ class PPPProcessor(threading.Thread):
                 # Wait for the specified interval
                 print(f"PPP Processor: Waiting for {interval/60:.1f} minutes before next PPP run...")
                 target = self.start_time + timedelta(seconds=interval)
-                while datetime.now() < target:
+                while datetime.now() < target and not self.stop_event.is_set():
                     time.sleep(1)
-                    if self.stop_event.is_set():
-                        break
+                if self.stop_event.is_set():
+                    break
                  
                 # Take snapshot of UBX data and run PPP   
                 print("PPP Processor: Taking UBX snapshot and running PPP...")
