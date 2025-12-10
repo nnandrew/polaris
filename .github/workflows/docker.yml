@@ -1,0 +1,46 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+  strategy:
+    matrix:
+      include:
+        - image: enrollment-client
+          path: ./common/enrollment-client
+        - image: enrollment-server
+          path: ./lighthouse/enrollment-server
+        - image: ntrip-client
+          path: ./rover/ntrip-client
+        - image: ntrip-caster
+          path: ./rover/ntrip-caster
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU for cross-platform
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: nnandrew
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.path }}
+          file: ${{ matrix.path }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/drew/polaris/${{ matrix.image }}:latest
