@@ -8,17 +8,17 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-  strategy:
-    matrix:
-      include:
-        - image: enrollment-client
-          path: ./common/enrollment-client
-        - image: enrollment-server
-          path: ./lighthouse/enrollment-server
-        - image: ntrip-client
-          path: ./rover/ntrip-client
-        - image: ntrip-caster
-          path: ./rover/ntrip-caster
+    strategy:
+      matrix:
+        include:
+          - image: enrollment-client
+            path: ./common/enrollment-client
+          - image: enrollment-server
+            path: ./lighthouse/enrollment-server
+          - image: ntrip-client
+            path: ./rover/ntrip-client
+          - image: ntrip-caster
+            path: ./rover/ntrip-caster
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
