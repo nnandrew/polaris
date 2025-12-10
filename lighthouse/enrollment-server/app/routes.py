@@ -17,6 +17,9 @@ import requests
 # X=2-254: Host addresses
 # X=255: Broadcast address
 
+LIGHTHOUSE_HOST_ID = 1
+BASESTATION_HOST_ID = 2
+
 main_bp = flask.Blueprint('main', __name__)
 
 @main_bp.route('/api/hosts/enroll', methods=['POST'])
@@ -52,7 +55,7 @@ def action(host_id):
         Flask response indicating the result of the action.
     """
 
-    if host_id == 1:
+    if host_id == LIGHTHOUSE_HOST_ID:
         return "Cannot modify reserved lighthouse id", 400
     action = flask.request.args.get('action')
     match action:
@@ -78,6 +81,22 @@ def action(host_id):
                 return "Host not found", 404
             os.remove(f"/home/enrollment-server/shared/config_{host_id}.yaml")
             return "Host removed", 200
+        case 'config':
+            # Build the target URL
+            config_msg = flask.request.json.get('config')
+            coords = flask.request.json.get('coords')
+            if not config_msg or not coords:
+                return "Missing config_msg or coords", 400
+            try:
+                # Forward body to specified node
+                url = f"http://192.168.100.{host_id}/config"
+                if coords and host_id == BASESTATION_HOST_ID:
+                    url = f"http://192.168.100.{host_id}/fixed",
+                response = requests.post(url=url, json=flask.request.json, timeout=3)
+                return response.text, response.status_code
+            except requests.exceptions.RequestException as e:
+                flask.current_app.logger.error(f"Failed to contact host {host_id}: {str(e)}")
+                return f"Failed to contact host {host_id}: {str(e)}", 500
         case 'config':
             # Build the target URL
             config_msg = flask.request.json.get('config_msg')
@@ -121,8 +140,8 @@ def download_nebula_config(host_id):
         
         group_name = result[0]
         
-        # Handle lighthouse config (host_id = 1) which has a different filename
-        if host_id == 1:
+        # Handle lighthouse config which has a different filename
+        if host_id == LIGHTHOUSE_HOST_ID:
             config_path = "/home/enrollment-server/shared/config.yml"
         else:
             config_path = f"/home/enrollment-server/shared/config_{host_id}.yaml"
