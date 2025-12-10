@@ -18,7 +18,7 @@ jobs:
           - image: ntrip-client
             path: ./rover/ntrip-client
           - image: ntrip-caster
-            path: ./rover/ntrip-caster
+            path: ./base-station/ntrip-caster
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
