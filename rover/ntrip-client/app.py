@@ -5,13 +5,13 @@ This multithreaded application connects to an NTRIP caster to receive RTCM
 correction data, applies it to a local GPS device, and logs the resulting
 high-precision location data to an InfluxDB database.
 
-The application consists of three main threads:
-1. `rtcm_get_thread`: Connects to the NTRIP caster and fetches RTCM data into a
-   shared queue.
-2. `rtcm_process_thread`: Reads RTCM data from the queue and forwards it to the
-   GPS device's serial port.
-3. `read_messages_thread`: Reads UBX (NAV-PVT) messages from the GPS, formats
+The application uses `pygnssutils` to handle the NTRIP connection and
+consists of the following main components:
+1. `GNSSNTRIPClient`: Connects to the NTRIP caster and forwards RTCM data
+   to the GPS device's serial port.
+2. `read_messages_thread`: Reads UBX (NAV-PVT) messages from the GPS, formats
    them as data points, and writes them to InfluxDB.
+3. `ConfigServer`: A Flask server for dynamic configuration of the rover.
 
 The script is configured via a `GPS_TYPE` variable and environment variables
 for InfluxDB credentials. It is designed to be terminated gracefully with CTRL-C.
@@ -235,7 +235,7 @@ def app():
                     mountpoint = "AUS_LOFT_GNSS"
                     ntripuser = "andrewvnguyen@utexas.edu"
                 gnc = GNSSNTRIPClient()
-                print(f"{'rtcm_get_thread':<20}: Using RTK caster at {server}")
+                print(f"{'ntrip_client':<20}: Using RTK caster at {server}")
     
     # Add thread for user input handling
     thread_pool.append(

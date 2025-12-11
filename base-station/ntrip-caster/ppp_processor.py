@@ -13,6 +13,18 @@ import re
 import threading
 
 class PPPProcessor(threading.Thread):
+    """
+    Background thread that manages the Precise Point Positioning (PPP) process
+    to automatically calibrate the Base Station's fixed position.
+
+    It performs the following steps:
+    1. Checks for an existing valid calibration.
+    2. If no valid calibration exists, starts a survey-in process.
+    3. Periodically takes snapshots of raw UBX data.
+    4. Downloads precise orbital and clock products from the internet.
+    5. Runs RTKLIB's `rnx2rtkp` to calculate a PPP solution.
+    6. Updates the Base Station's fixed position if accuracy improves.
+    """
     
     def __init__(self, ubx_config, latest_pos, ppp_done, stop_event):
         self.ubx_config = ubx_config

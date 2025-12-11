@@ -1,14 +1,16 @@
 """
 NTRIP Caster Application.
 
-This script initializes a GPS device, determines the local IP address, and
+This script initializes a GPS device, performs auto-calibration via PPP, and
 starts the `gnssserver` process to broadcast GNSS data as an NTRIP caster.
 
-The script performs the following steps:
+The application performs the following steps:
 1. Initializes a GPS reader to communicate with the GNSS device.
 2. Reads the base station configuration from `BS_Config.txt` and sends it to the device.
-3. Binds to all available network interfaces (0.0.0.0).
-4. Constructs and executes a `gnssserver` command to start the NTRIP caster.
+3. Starts a `read_messages_thread` to log raw UBX data for PPP and send telemetry to InfluxDB.
+4. Starts a `ConfigServer` (Flask app) for dynamic remote configuration.
+5. Starts a `PPPProcessor` to automatically determine the fixed position.
+6. Constructs and executes a `gnssserver` command to start the NTRIP caster.
 """
 
 from queue import Queue
@@ -35,6 +37,14 @@ except ImportError:
     from config_server import ConfigServer
 
 def read_messages_thread(ubx_config, rtcm_fd, latest_pos, ppp_done, stop_event):
+    """
+    Reads UBX messages from the GPS device.
+
+    This thread performs three main functions:
+    1. Forwards RTCM3 messages to the pty for the NTRIP caster.
+    2. Logs raw UBX messages to a file for the PPP Processor to use.
+    3. Sends telemetry data (satellite counts, position) to InfluxDB.
+    """
     
     print(f"{'read_messages_thread':<20}: Starting...")
     

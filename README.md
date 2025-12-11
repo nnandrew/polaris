@@ -20,15 +20,18 @@ The Lighthouse is the central coordination server, typically run on a cloud inst
 The Base Station is a stationary GNSS receiver with a known, fixed location. Its primary role is to generate and broadcast correction data.
 
 - **GNSS Receiver**: A high-quality GNSS module (like the SparkFun u-blox ZED-F9P) that receives raw satellite signals.
+- **PPP Processor**: A background service that automatically calibrates the Base Station's position using Precise Point Positioning (PPP). It logs raw UBX data, downloads precise orbital and clock products from the Scripps Orbit and Permanent Array Center (SOPAC), and runs RTKLIB's `rnx2rtkp` to determine the station's fixed position with high accuracy.
 - **NTRIP Caster**: A service (`gnssserver`) that takes the raw GNSS data, generates RTCM 3 correction messages, and broadcasts them over the network via an NTRIP (Networked Transport of RTCM via Internet Protocol) server.
+- **Configuration Server**: A Flask-based API running on port 80 that allows for dynamic, remote configuration of the GNSS receiver and manual updating of the fixed position.
 - **Enrollment Client**: A script that runs on startup to enroll with the Lighthouse and retrieve the necessary Nebula configuration to join the mesh network.
 
-### 3. Rover (e.g. Qualcomm RB5, Rasberry Pi)
+### 3. Rover (e.g. Qualcomm RB5, Raspberry Pi)
 The Rover is the mobile unit whose position is being tracked.
 
 - **GPS Receiver**: A GNSS module, identical to the one on the Base Station.
-- **NTRIP Client**: A multi-threaded Python application that connects to the Base Station's NTRIP caster, receives the RTCM correction stream, and applies it directly to the local GPS module.
-- **InfluxDB Logger**: A thread within the NTRIP client that reads the corrected position data (`NAV-PVT` messages) from the GPS and logs it to an InfluxDB time-series database for monitoring and analysis.
+- **NTRIP Client**: A Python application that uses `pygnssutils` to connect to the Base Station's NTRIP caster, receive the RTCM correction stream, and apply it directly to the local GPS module.
+- **InfluxDB Logger**: A dedicated thread that continuously reads the corrected position data (`NAV-PVT` messages) from the GPS and logs metrics (latitude, longitude, accuracy, fix type) to the central InfluxDB instance.
+- **Configuration Server**: Similar to the Base Station, the Rover runs a local Flask server for dynamic configuration.
 - **Enrollment Client**: Same as the Base Station, this script allows the Rover to join the network.
 
 
@@ -135,7 +138,7 @@ Finally, set up the mobile Rover.
 
 Once all three components are running, the system will operate automatically:
 1.  The **Base Station** and **Rover** will enroll with the **Lighthouse** and join the secure Nebula network.
-2.  The **Base Station** will start broadcasting RTCM correction data from its fixed location.
+2.  The **Base Station** will auto-calibrate using PPP (if not already calibrated) and start broadcasting RTCM correction data from its fixed location.
 3.  The **Rover's** NTRIP client will automatically discover the Base Station's IP address (by querying the Lighthouse's `/api/ntrip` endpoint) and start consuming the RTCM data.
 4.  The Rover's GPS module will begin using the correction data to achieve a high-precision (RTK) fix.
 5.  The Rover will log its position, fix status, and other metrics to your configured InfluxDB instance.
