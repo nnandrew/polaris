@@ -1,10 +1,9 @@
 pygnssutils
 pyubx2
-pygpsclient
+pyserial
 requests
 tqdm
 flask
 dotenv
 influxdb3-python
-matplotlib
 geopy

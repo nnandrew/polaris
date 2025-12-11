@@ -23,7 +23,6 @@ import time
 import sys
 import os
 
-import pytz
 import dotenv
 import requests
 from pyubx2 import UBXReader
@@ -168,7 +167,7 @@ def input_thread(save_event, stop_event):
     
     print(f"{'input_thread':<20}: Starting...")
     def get_current_utc_time():
-        current_time = datetime.now(pytz.timezone("US/Central"))
+        current_time = datetime.now()
         return current_time
     
     while not stop_event.is_set():

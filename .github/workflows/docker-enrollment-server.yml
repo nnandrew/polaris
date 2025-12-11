@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - "lighthouse/enrollment-server/**"
-      - "common/influx_client/**"
+      - "common/influx_client"
 
 jobs:
   enrollment-server:

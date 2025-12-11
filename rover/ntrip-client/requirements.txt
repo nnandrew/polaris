@@ -1,11 +1,7 @@
 dotenv
 influxdb3-python
-numpy
-pygpsclient
 pygnssutils
-pyrtcm
 pyserial
-pytz
 pyubx2
 requests
 flask
