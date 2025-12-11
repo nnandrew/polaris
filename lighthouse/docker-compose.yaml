@@ -1,7 +1,7 @@
 services:
   enrollment-server:
-    build: ./enrollment-server  # Local Development Only
-    # image: ghcr.io/drew/polaris/enrollment-server:latest # Final Deliverable
+    # build: ./enrollment-server  # Local Development Only
+    image: ghcr.io/nnandrew/polaris/enrollment-server:latest # Final Deliverable
     container_name: enrollment-server
     environment:
       - LIGHTHOUSE_HOSTNAME=${LIGHTHOUSE_HOSTNAME}  

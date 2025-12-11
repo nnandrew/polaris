@@ -1,15 +1,19 @@
 # Polaris: A High-Precision RTK GNSS System
 
-Polaris is a complete system for Real-Time Kinematic (RTK) GNSS, designed to deliver low-latency, centimeter-level positioning accuracy. It establishes a secure and efficient network for a **Base Station**, a **Rover**, and a **Lighthouse** server to communicate, enabling the Rover to calculate its precise location by receiving correction data from the Base Station.
+Polaris is a complete system for Real-Time Kinematic (RTK) GNSS, designed to deliver low-latency, centimeter-level positioning accuracy. It establishes a secure and efficient network for a **Base Station**, a **Rover**, and a **Dashboard Lighthouse** server to communicate, enabling the Rover to calculate its precise location by receiving correction data from the Base Station.
 
 The system is built with security and performance in mind, using a Nebula mesh network for secure, low-latency data transfer and a simple, robust enrollment system for managing network nodes.
+
+![Top-Level Design](docs/top.png "Top-Level Design")
 
 ## System Architecture
 
 Polaris consists of three primary components that work together over a secure mesh network.
 
-### 1. Lighthouse (EC2 Server)
-The Lighthouse is the central coordination server, typically run on a cloud instance with a public IP address. It is the anchor of the Nebula mesh network.
+![HW Design](docs/hw.png "HW Design")
+
+### 1. Dashboard Lighthouse (EC2 Server)
+The Dashboard Lighthouse is the central coordination server, typically run on a cloud instance with a public IP address. It is the anchor of the Nebula mesh network.
 
 - **Enrollment Server**: A Flask-based web service that handles requests from new nodes (Base Stations or Rovers) to join the network. It authenticates nodes using a shared secret key, generates unique Nebula certificates and configuration files for them, and maintains a record of all nodes in the network.
 - **Nebula Lighthouse**: This core Nebula service acts as the discovery point for all other nodes, allowing them to find each other and establish secure, direct connections.
@@ -34,6 +38,7 @@ The Rover is the mobile unit whose position is being tracked.
 - **Configuration Server**: Similar to the Base Station, the Rover runs a local Flask server for dynamic configuration.
 - **Enrollment Client**: Same as the Base Station, this script allows the Rover to join the network.
 
+![SW Design](docs/sw.png "SW Design")
 
 ## Requirements
 
@@ -47,6 +52,7 @@ The Rover is the mobile unit whose position is being tracked.
 
 - **Docker and Docker Compose**: The entire Polaris system is containerized using Docker. You will need to have Docker and Docker Compose installed on your component machines.
 - **Git**: The project is version-controlled with Git.
+- **TUN/TAP**: Nebula requires TUN kernel support.
 
 ### Security Prerequisites
 
@@ -77,12 +83,13 @@ First, set up the central server.
     ```
 
 3.  **Configure TLS:**
+    Run the below script to configure HTTPS for your domain.
     `initletsencrypt.sh`.
 
 4.  **Start the services:**
     Use Docker Compose to build and run the Lighthouse services.
     ```bash
-    docker-compose up --build -d
+    docker-compose up -d
     ```
     On the first run, the server will download the `nebula-cert` tool and generate a Certificate Authority (`ca.key`, `ca.crt`), a host record database (`record.db`), and a configuration file (`config.yml`) inside the `lighthouse/shared/` directory.
 
@@ -106,9 +113,9 @@ Next, set up the stationary Base Station.
 
 4.  **Start the services:**
     ```bash
-    docker-compose up --build -d
+    docker-compose up -d
     ```
-    The enrollment client will contact the Lighthouse, receive its unique configuration, and place it in the `base-station/shared/` directory. The Nebula service will then use this to connect to the network.
+  
 
 ### 3. Rover Setup
 Finally, set up the mobile Rover.
@@ -131,17 +138,17 @@ Finally, set up the mobile Rover.
 
 4.  **Start the services:**
     ```bash
-    docker-compose up --build -d
+    docker-compose up -d
     ```
 
 ## Usage
 
 Once all three components are running, the system will operate automatically:
 1.  The **Base Station** and **Rover** will enroll with the **Lighthouse** and join the secure Nebula network.
-2.  The **Base Station** will auto-calibrate using PPP (if not already calibrated) and start broadcasting RTCM correction data from its fixed location. Alternately, you can enter a surveyed position for the station through the dashboard, overriding the PPP‑derived value when desired. This enables rapid deployment in environments where the exact base location is already known.
-3.  The **Rover's** NTRIP client will automatically discover the Base Station's IP address (by querying the Lighthouse's `/api/ntrip` endpoint) and start consuming the RTCM data.
-4.  The Rover's GPS module will begin using the correction data to achieve a high-precision (RTK) fix.
-5.  The Rover will log its position, fix status, and other metrics to your configured InfluxDB instance.
+2.  The **Base Station** will auto-calibrate using PPP (if not already calibrated) and start broadcasting RTCM correction data from its fixed location. Alternatively, you can enter a surveyed position for the station through the dashboard, overriding the PPP‑derived value when desired. This enables rapid deployment in environments where the exact base location is already known.
+3.  The **Rover's** NTRIP client will automatically discover the **Base Station's** IP address (by querying the **Lighthouse's** `/api/ntrip` endpoint) and start consuming the RTCM data.
+4.  The **Rover's** GPS module will begin using the correction data to achieve a high-precision (RTK) fix.
+5.  The **Rover** will log its position, fix status, and other metrics to your configured InfluxDB instance.
 
 You can monitor the system by:
 -   **Viewing the logs** of the Docker containers on each machine: `docker logs <service_name>`
@@ -149,5 +156,5 @@ You can monitor the system by:
 
 ## Useful Links
 - **Nebula Project**: [https://github.com/slackhq/nebula](https://github.com/slackhq/nebula)
-- **pygnssutils Project**: [https://github.com/semuconsulting/pygnssutils](https://github.com/semuconsulting/pygnssutils)
 - **RTKLIB Project**: [https://github.com/rtklibexplorer/RTKLIB](https://github.com/rtklibexplorer/RTKLIB)
+- **pygnssutils Project**: [https://github.com/semuconsulting/pygnssutils](https://github.com/semuconsulting/pygnssutils)
