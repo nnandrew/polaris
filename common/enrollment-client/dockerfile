@@ -1,4 +1,5 @@
 FROM python:3.10-slim
+LABEL org.opencontainers.image.source https://github.com/nnandrew/polaris
 WORKDIR /home/enrollment-client
 COPY . /home/enrollment-client
 RUN apt-get update && apt-get install -y iputils-ping && rm -rf /var/lib/apt/lists/*

@@ -13,6 +13,7 @@ RUN cd /build/RTKLIB/app/consapp/rnx2rtkp/gcc && make
 
 ### ---- RUNTIME STAGE ----
 FROM python:3.10-slim
+LABEL org.opencontainers.image.source https://github.com/nnandrew/polaris
 
 # Copy binaries
 COPY --from=builder /build/RTKLIB/app/consapp/str2str/gcc/str2str /usr/local/bin/

@@ -1,4 +1,5 @@
 FROM python:3.10-slim
+LABEL org.opencontainers.image.source https://github.com/nnandrew/polaris
 COPY requirements.txt /home/ntrip-client/requirements.txt
 WORKDIR /home/ntrip-client
 RUN pip install --no-cache-dir -r requirements.txt
