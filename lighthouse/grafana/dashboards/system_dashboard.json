@@ -1086,7 +1086,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\r\n  time,\r\n  altitude_m,\r\n  altitude_m + vertical_accuracy_m AS upper_bound,\r\n  altitude_m - vertical_accuracy_m AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time)\r\nORDER BY\r\n  time",
+          "rawSql": "SELECT\r\n  time,\r\n  altitude_m,\r\n  altitude_m + vertical_accuracy_m AS upper_bound,\r\n  altitude_m - vertical_accuracy_m AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND altitude_m IS NOT NULL\r\nORDER BY\r\n  time",
           "refId": "value",
           "sql": {
             "columns": [
@@ -1421,7 +1421,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\r\n  time,\r\n  ground_speed_ms,\r\n  ground_speed_ms + speed_accuracy_ms AS upper_bound,\r\n  GREATEST(ground_speed_ms - speed_accuracy_ms, 0) AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) \r\nORDER BY\r\n  time",
+          "rawSql": "SELECT\r\n  time,\r\n  ground_speed_ms,\r\n  ground_speed_ms + speed_accuracy_ms AS upper_bound,\r\n  GREATEST(ground_speed_ms - speed_accuracy_ms, 0) AS lower_bound\r\nFROM\r\n  metrics\r\nWHERE\r\n  $__timeFilter(time) AND ground_speed_ms IS NOT NULL\r\nORDER BY\r\n  time",
           "refId": "value",
           "sql": {
             "columns": [
@@ -1668,7 +1668,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  num_sats_code_locked\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) \nORDER BY\n  time\n",
+          "rawSql": "SELECT\n  num_sats_code_locked\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND num_sats_code_locked IS NOT NULL\nORDER BY\n  time\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1982,11 +1982,11 @@
               },
               {
                 "color": "yellow",
-                "value": 5
+                "value": 15
               },
               {
                 "color": "green",
-                "value": 10
+                "value": 20
               }
             ]
           },
@@ -2030,7 +2030,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  num_sats_carrier_locked\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) \nORDER BY\n  time\n",
+          "rawSql": "SELECT\n  num_sats_carrier_locked\nFROM\n  metrics\nWHERE\n  $__timeFilter(time) AND num_sats_carrier_locked IS NOT NULL\nORDER BY\n  time\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2257,7 +2257,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  num_sats_code_locked\nFROM\n  station_telemetry\nWHERE\n  $__timeFilter(time) \nORDER BY\n  time\n",
+          "rawSql": "SELECT\n  num_sats_code_locked\nFROM\n  station_telemetry\nWHERE\n  $__timeFilter(time) AND num_sats_code_locked IS NOT NULL\nORDER BY\n  time\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2515,7 +2515,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  num_sats_carrier_locked\nFROM\n  station_telemetry\nWHERE\n  $__timeFilter(time) \nORDER BY\n  time\n",
+          "rawSql": "SELECT\n  num_sats_carrier_locked\nFROM\n  station_telemetry\nWHERE\n  $__timeFilter(time) AND num_sats_carrier_locked IS NOT NULL\nORDER BY\n  time\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -3272,8 +3272,8 @@
     "list": []
   },
   "time": {
-    "from": "2025-12-08T19:11:15.695Z",
-    "to": "2025-12-08T21:08:02.061Z"
+    "from": "2025-12-08T20:35:40.000Z",
+    "to": "2025-12-08T20:36:30.000Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -3292,5 +3292,5 @@
   "timezone": "browser",
   "title": "Dashboard",
   "uid": "deiu8hvipbo5cb",
-  "version": 6
+  "version": 2
 }
